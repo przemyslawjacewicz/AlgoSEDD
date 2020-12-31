@@ -33,16 +33,17 @@ set style line 103 lw 1 lt rgb '#f5ee9e'
 set style line 104 lw 1 lt rgb '#f49e4c'
 set style line 105 lw 1 lt rgb '#ab3428'
 set style line 106 lw 1 lt rgb '#73201b'
+set style fill solid noborder
 
 set title '${TAG}   aggregation interval=${AGGREGATION_INTERVAL}'
 
 set terminal pngcairo size 800,600 enhanced font 'Segoe UI,10'
 set output 'entries_count__${TAG}_${AGGREGATION_INTERVAL}.png'
 
-plot '${FILE}' using 1:14 with filledcurve x1 ls 106 title 'questions + answers + comments + votes + post history + post links',\
-'' using 1:13 with filledcurve x1 ls 105 title 'questions + answers + comments + votes + post history',\
-'' using 1:12 with filledcurve x1 ls 104 title 'questions + answers + comments + votes',\
-'' using 1:11 with filledcurve x1 ls 103 title 'questions + answers + comments',\
-'' using 1:10 with filledcurve x1 ls 102 title 'questions + answers',\
-'' using 1:9 with filledcurve x1 ls 101 title 'questions'
+plot '${FILE}' using 1:8 with boxes ls 106 title 'questions + answers + comments + votes + post history + post links',\
+'' using 1:7 with boxes ls 105 title 'questions + answers + comments + votes + post history',\
+'' using 1:6 with boxes ls 104 title 'questions + answers + comments + votes',\
+'' using 1:5 with boxes ls 103 title 'questions + answers + comments',\
+'' using 1:4 with boxes ls 102 title 'questions + answers',\
+'' using 1:3 with boxes ls 101 title 'questions'
 EOF
