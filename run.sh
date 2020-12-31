@@ -1,11 +1,11 @@
 #!/bin/bash
-# $1 - master
-# $2 - application to run
+# $1 - application to run
+# $2 - master
 # $3+ - application arguments
 
 ARGS=("$@")
-MASTER="$1"
-APP="$2"
+APP="$1"
+MASTER="$2"
 APP_ARGS=("${ARGS[@]:2}")
 
 spark-submit \
