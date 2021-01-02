@@ -67,7 +67,7 @@ e.g.
 bash scripts/relative_popularity_plot.sh \
   output/tag\=print-quality/part-00000-9b6e8399-3e48-4a97-a355-4b239b975515.c000.csv \
   print-quality \
-  '8 weeks' \
+  8weeks \
   1.0 \
   0.1
 
@@ -81,6 +81,6 @@ e.g.
 bash scripts/entries_count_plot.sh \
   output/tag\=print-quality/part-00000-9b6e8399-3e48-4a97-a355-4b239b975515.c000.csv \
   print-quality \
-  '8 weeks' \
+  8weeks \
   100000
 ```
