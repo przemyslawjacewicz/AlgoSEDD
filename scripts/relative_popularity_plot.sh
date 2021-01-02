@@ -37,7 +37,7 @@ set style line 106 lw 2 lt rgb '#73201b'
 set title '${TAG}     aggregation interval=${AGGREGATION_INTERVAL}'
 
 set terminal pngcairo size 800,600 enhanced font 'Segoe UI,10'
-set output 'relative_popularity__${TAG}_${AGGREGATION_INTERVAL}_.png'
+set output 'relative_popularity__${TAG}_${AGGREGATION_INTERVAL}.png'
 
 plot '$FILE' using 1:20 with lines ls 106 title 'questions + answers + comments + votes + post history + post links',\
   '' using 1:19 with lines ls 105 title 'questions + answers + comments + votes + post history',\
