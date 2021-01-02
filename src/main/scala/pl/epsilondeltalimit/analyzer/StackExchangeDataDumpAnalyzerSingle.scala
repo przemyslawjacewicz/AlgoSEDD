@@ -1,12 +1,14 @@
 package pl.epsilondeltalimit.analyzer
 
+import java.sql.Date
 import java.time.format.DateTimeFormatter
 import java.time.{Duration, LocalDate}
 
 import org.apache.log4j.Logger
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{SaveMode, SparkSession}
+import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
+import org.apache.spark.sql.{RowFactory, SaveMode, SparkSession}
 import pl.epsilondeltalimit.analyzer.analyze.AnalyzeSupport._
 import pl.epsilondeltalimit.analyzer.read._
 
@@ -26,11 +28,11 @@ object StackExchangeDataDumpAnalyzerSingle {
     val pathToTagsFile = args(8)
     val pathToUsersFile = args(9)
     val pathToVotesFile = args(10)
-    val pathToOutput = args(11)
+    val pathToOutputRoot = args(11)
 
     val conf = new SparkConf()
     conf.setAppName(StackExchangeDataDumpAnalyzerSingle.getClass.getSimpleName)
-//    conf.setMaster("local[2]") //TODO: set to proper value when run on cluster
+    //    conf.setMaster("local[2]") //TODO: set to proper value when run on cluster
 
     val spark = SparkSession.builder()
       .config(conf)
@@ -100,28 +102,32 @@ object StackExchangeDataDumpAnalyzerSingle {
     //    tagsByCreationDataFromPostLinks.show() //TODO: remove when implementation is finished
 
     logger.warn("Counting entries by creation date and tag.")
+    val creationDateAndTag = Seq("creation_date", "tag")
     val dataEntriesCountByCreationDateAndTag = countEntriesByCreationDateAndTag(tagsByCreationDataFromQuestions)
-      .withColumnRenamed("count", "question_entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromAnswers), Seq("creation_date", "tag"))
-      .withColumnRenamed("count", "answer_entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromComments), Seq("creation_date", "tag"))
-      .withColumnRenamed("count", "comment_entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromVotes), Seq("creation_date", "tag"))
-      .withColumnRenamed("count", "vote_entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromPostHistory), Seq("creation_date", "tag"))
-      .withColumnRenamed("count", "post_history_entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromPostLinks), Seq("creation_date", "tag"))
-      .withColumnRenamed("count", "post_link_entries_count_for_day_and_tag")
+      .withColumnRenamed("count", "q__entries_count_for_day_and_tag")
+      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromAnswers), creationDateAndTag)
+      .withColumnRenamed("count", "a__entries_count_for_day_and_tag")
+      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromComments), creationDateAndTag)
+      .withColumnRenamed("count", "c__entries_count_for_day_and_tag")
+      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromVotes), creationDateAndTag)
+      .withColumnRenamed("count", "v__entries_count_for_day_and_tag")
+      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromPostHistory), creationDateAndTag)
+      .withColumnRenamed("count", "ph__entries_count_for_day_and_tag")
+      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromPostLinks), creationDateAndTag)
+      .withColumnRenamed("count", "pl__entries_count_for_day_and_tag")
     //    dataEntriesCountByCreationDateAndTag.show() //TODO: remove when implementation is finished
 
     val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val daysBetween = Duration.between(LocalDate.parse(startDate, fmt).atStartOfDay(), LocalDate.parse(endDate, fmt).atStartOfDay()).toDays
-    val days = (for (day <- 0L to daysBetween) yield LocalDate.parse(startDate, fmt).plusDays(day)).toDF("creation_date")
+    val days = spark.createDataFrame(
+      spark.sparkContext.parallelize(for (day <- 0L to daysBetween) yield RowFactory.create(Date.valueOf(LocalDate.parse(startDate, fmt).plusDays(day)))),
+      StructType(Array(StructField("creation_date", DataTypes.DateType))))
+    //    val days = (for (day <- 0L to daysBetween) yield LocalDate.parse(startDate, fmt).plusDays(day)).toDF("creation_date")
     val daysAndTags = days
       .crossJoin(tags.select($"tag_name".as("tag")))
     //    daysAndTags.show() //TODO: remove when implementation is finished
 
-    logger.warn("Mapping to date range and tags.")
+    logger.warn("Mapping entries to date range and tags.")
     val entriesCountByCreationDateAndTag = daysAndTags
       .join(dataEntriesCountByCreationDateAndTag, Seq("creation_date", "tag"), "left_outer")
     //    entriesCountByCreationDateAndTag.orderBy($"creation_date".desc).show() //TODO: remove when implementation is finished
@@ -130,12 +136,12 @@ object StackExchangeDataDumpAnalyzerSingle {
     val entriesCountByAggregationIntervalAndTag = entriesCountByCreationDateAndTag
       .groupBy(window($"creation_date", aggregationInterval).as("aggregation_interval"), $"tag")
       .agg(
-        sum("question_entries_count_for_day_and_tag").as("question_entries_count_for_aggregation_interval_and_tag"),
-        sum("answer_entries_count_for_day_and_tag").as("answer_entries_count_for_aggregation_interval_and_tag"),
-        sum("comment_entries_count_for_day_and_tag").as("comment_entries_count_for_aggregation_interval_and_tag"),
-        sum("vote_entries_count_for_day_and_tag").as("vote_entries_count_for_aggregation_interval_and_tag"),
-        sum("post_history_entries_count_for_day_and_tag").as("post_history_entries_count_for_aggregation_interval_and_tag"),
-        sum("post_link_entries_count_for_day_and_tag").as("post_link_entries_count_for_aggregation_interval_and_tag")
+        sum("q__entries_count_for_day_and_tag").as("q__entries_count_for_aggregation_interval_and_tag"),
+        sum("a__entries_count_for_day_and_tag").as("a__entries_count_for_aggregation_interval_and_tag"),
+        sum("c__entries_count_for_day_and_tag").as("c__entries_count_for_aggregation_interval_and_tag"),
+        sum("v__entries_count_for_day_and_tag").as("v__entries_count_for_aggregation_interval_and_tag"),
+        sum("ph__entries_count_for_day_and_tag").as("ph__entries_count_for_aggregation_interval_and_tag"),
+        sum("pl__entries_count_for_day_and_tag").as("pl__entries_count_for_aggregation_interval_and_tag")
       )
     //    entriesCountByAggregationIntervalAndTag.orderBy($"aggregation_interval".desc).show() //TODO: remove when implementation is finished
 
@@ -143,32 +149,32 @@ object StackExchangeDataDumpAnalyzerSingle {
     val entriesCountByAggregationInterval = entriesCountByAggregationIntervalAndTag
       .groupBy("aggregation_interval")
       .agg(
-        sum($"question_entries_count_for_aggregation_interval_and_tag")
+        sum($"q__entries_count_for_aggregation_interval_and_tag")
           .as("q__entries_count_for_aggregation_interval"),
-        sum($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag")
+        sum($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag")
           .as("q_a__entries_count_for_aggregation_interval"),
-        sum($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag" +
-          $"comment_entries_count_for_aggregation_interval_and_tag")
+        sum($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag" +
+          $"c__entries_count_for_aggregation_interval_and_tag")
           .as("q_a_c__entries_count_for_aggregation_interval"),
-        sum($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag" +
-          $"comment_entries_count_for_aggregation_interval_and_tag" +
-          $"vote_entries_count_for_aggregation_interval_and_tag")
+        sum($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag" +
+          $"c__entries_count_for_aggregation_interval_and_tag" +
+          $"v__entries_count_for_aggregation_interval_and_tag")
           .as("q_a_c_v__entries_count_for_aggregation_interval"),
-        sum($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag" +
-          $"comment_entries_count_for_aggregation_interval_and_tag" +
-          $"vote_entries_count_for_aggregation_interval_and_tag" +
-          $"post_history_entries_count_for_aggregation_interval_and_tag")
+        sum($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag" +
+          $"c__entries_count_for_aggregation_interval_and_tag" +
+          $"v__entries_count_for_aggregation_interval_and_tag" +
+          $"ph__entries_count_for_aggregation_interval_and_tag")
           .as("q_a_c_v_ph__entries_count_for_aggregation_interval"),
-        sum($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag" +
-          $"comment_entries_count_for_aggregation_interval_and_tag" +
-          $"vote_entries_count_for_aggregation_interval_and_tag" +
-          $"post_history_entries_count_for_aggregation_interval_and_tag" +
-          $"post_link_entries_count_for_aggregation_interval_and_tag")
+        sum($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag" +
+          $"c__entries_count_for_aggregation_interval_and_tag" +
+          $"v__entries_count_for_aggregation_interval_and_tag" +
+          $"ph__entries_count_for_aggregation_interval_and_tag" +
+          $"pl__entries_count_for_aggregation_interval_and_tag")
           .as("q_a_c_v_ph_pl__entries_count_for_aggregation_interval")
       )
     //    entriesCountByAggregationInterval.orderBy($"aggregation_interval".desc).show() //TODO: remove when implementation is finished
@@ -180,37 +186,38 @@ object StackExchangeDataDumpAnalyzerSingle {
 
     val relativePopularityByAggregationIntervalAndTag = entriesCount
       .withColumn("q__share",
-        $"question_entries_count_for_aggregation_interval_and_tag" / $"q__entries_count_for_aggregation_interval")
+        $"q__entries_count_for_aggregation_interval_and_tag" / $"q__entries_count_for_aggregation_interval")
       .withColumn("q_a__share",
-        ($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag") / $"q_a__entries_count_for_aggregation_interval")
+        ($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag") / $"q_a__entries_count_for_aggregation_interval")
       .withColumn("q_a_c__share",
-        ($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag" +
-          $"comment_entries_count_for_aggregation_interval_and_tag") / $"q_a_c__entries_count_for_aggregation_interval")
+        ($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag" +
+          $"c__entries_count_for_aggregation_interval_and_tag") / $"q_a_c__entries_count_for_aggregation_interval")
       .withColumn("q_a_c_v__share",
-        ($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag" +
-          $"comment_entries_count_for_aggregation_interval_and_tag" +
-          $"vote_entries_count_for_aggregation_interval_and_tag") / $"q_a_c_v__entries_count_for_aggregation_interval")
+        ($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag" +
+          $"c__entries_count_for_aggregation_interval_and_tag" +
+          $"v__entries_count_for_aggregation_interval_and_tag") / $"q_a_c_v__entries_count_for_aggregation_interval")
       .withColumn("q_a_c_v_ph__share",
-        ($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag" +
-          $"comment_entries_count_for_aggregation_interval_and_tag" +
-          $"vote_entries_count_for_aggregation_interval_and_tag" +
-          $"post_history_entries_count_for_aggregation_interval_and_tag") / $"q_a_c_v_ph__entries_count_for_aggregation_interval")
+        ($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag" +
+          $"c__entries_count_for_aggregation_interval_and_tag" +
+          $"v__entries_count_for_aggregation_interval_and_tag" +
+          $"ph__entries_count_for_aggregation_interval_and_tag") / $"q_a_c_v_ph__entries_count_for_aggregation_interval")
       .withColumn("q_a_c_v_ph_pl__share",
-        ($"question_entries_count_for_aggregation_interval_and_tag" +
-          $"answer_entries_count_for_aggregation_interval_and_tag" +
-          $"comment_entries_count_for_aggregation_interval_and_tag" +
-          $"vote_entries_count_for_aggregation_interval_and_tag" +
-          $"post_history_entries_count_for_aggregation_interval_and_tag" +
-          $"post_link_entries_count_for_aggregation_interval_and_tag") / $"q_a_c_v_ph_pl__entries_count_for_aggregation_interval")
+        ($"q__entries_count_for_aggregation_interval_and_tag" +
+          $"a__entries_count_for_aggregation_interval_and_tag" +
+          $"c__entries_count_for_aggregation_interval_and_tag" +
+          $"v__entries_count_for_aggregation_interval_and_tag" +
+          $"ph__entries_count_for_aggregation_interval_and_tag" +
+          $"pl__entries_count_for_aggregation_interval_and_tag") / $"q_a_c_v_ph_pl__entries_count_for_aggregation_interval")
       .withColumn("start", to_date($"aggregation_interval.start"))
       .withColumn("end", to_date($"aggregation_interval.end"))
       .drop("aggregation_interval")
     //    relativePopularityByAggregationIntervalAndTag.orderBy($"aggregation_interval".desc).show() //TODO: remove when implementation is finished
 
+    val formattedAggregationInterval = aggregationInterval.replaceAll(" ", "")
     logger.warn("Dumping relative popularity results.")
     relativePopularityByAggregationIntervalAndTag
       .na
@@ -219,12 +226,12 @@ object StackExchangeDataDumpAnalyzerSingle {
         $"start",
         $"end",
         $"tag",
-        $"question_entries_count_for_aggregation_interval_and_tag",
-        $"answer_entries_count_for_aggregation_interval_and_tag",
-        $"comment_entries_count_for_aggregation_interval_and_tag",
-        $"vote_entries_count_for_aggregation_interval_and_tag",
-        $"post_history_entries_count_for_aggregation_interval_and_tag",
-        $"post_link_entries_count_for_aggregation_interval_and_tag",
+        $"q__entries_count_for_aggregation_interval_and_tag",
+        $"a__entries_count_for_aggregation_interval_and_tag",
+        $"c__entries_count_for_aggregation_interval_and_tag",
+        $"v__entries_count_for_aggregation_interval_and_tag",
+        $"ph__entries_count_for_aggregation_interval_and_tag",
+        $"pl__entries_count_for_aggregation_interval_and_tag",
         $"q__entries_count_for_aggregation_interval",
         $"q_a__entries_count_for_aggregation_interval",
         $"q_a_c__entries_count_for_aggregation_interval",
@@ -245,7 +252,7 @@ object StackExchangeDataDumpAnalyzerSingle {
       .option("header", "true")
       .partitionBy("tag")
       .mode(SaveMode.Append)
-      .save(pathToOutput)
+      .save(s"$pathToOutputRoot/$formattedAggregationInterval")
 
     logger.warn("Dumping tags by entries count.")
     tags
@@ -255,7 +262,7 @@ object StackExchangeDataDumpAnalyzerSingle {
       .format("csv")
       .option("header", "true")
       .mode(SaveMode.Append)
-      .save(pathToOutput)
+      .save(s"$pathToOutputRoot/$formattedAggregationInterval")
 
     logger.warn("Done. Exiting.")
   }
