@@ -13,6 +13,7 @@ import pl.epsilondeltalimit.analyzer.analyze.AnalyzeSupport._
 import pl.epsilondeltalimit.analyzer.read._
 
 //TODO: customize logging - add start and finish msg
+//TODO: optimization
 object StackExchangeDataDumpAnalyzerSingle {
   private[this] val logger = Logger.getLogger(StackExchangeDataDumpAnalyzerSingle.getClass.getSimpleName)
 
@@ -28,7 +29,7 @@ object StackExchangeDataDumpAnalyzerSingle {
     val pathToTagsFile = args(8)
     val pathToUsersFile = args(9)
     val pathToVotesFile = args(10)
-    val pathToOutputRoot = args(11)
+    val pathToOutput = args(11)
 
     val conf = new SparkConf()
     conf.setAppName(StackExchangeDataDumpAnalyzerSingle.getClass.getSimpleName)
@@ -117,6 +118,7 @@ object StackExchangeDataDumpAnalyzerSingle {
       .withColumnRenamed("count", "pl__entries_count_for_day_and_tag")
     //    dataEntriesCountByCreationDateAndTag.show() //TODO: remove when implementation is finished
 
+    //TODO: move to support
     val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val daysBetween = Duration.between(LocalDate.parse(startDate, fmt).atStartOfDay(), LocalDate.parse(endDate, fmt).atStartOfDay()).toDays
     val days = spark.createDataFrame(
@@ -217,7 +219,6 @@ object StackExchangeDataDumpAnalyzerSingle {
       .drop("aggregation_interval")
     //    relativePopularityByAggregationIntervalAndTag.orderBy($"aggregation_interval".desc).show() //TODO: remove when implementation is finished
 
-    val formattedAggregationInterval = aggregationInterval.replaceAll(" ", "")
     logger.warn("Dumping relative popularity results.")
     relativePopularityByAggregationIntervalAndTag
       .na
@@ -252,7 +253,7 @@ object StackExchangeDataDumpAnalyzerSingle {
       .option("header", "true")
       .partitionBy("tag")
       .mode(SaveMode.Append)
-      .save(s"$pathToOutputRoot/$formattedAggregationInterval")
+      .save(pathToOutput)
 
     logger.warn("Dumping tags by entries count.")
     tags
@@ -262,7 +263,7 @@ object StackExchangeDataDumpAnalyzerSingle {
       .format("csv")
       .option("header", "true")
       .mode(SaveMode.Append)
-      .save(s"$pathToOutputRoot/$formattedAggregationInterval")
+      .save(pathToOutput)
 
     logger.warn("Done. Exiting.")
   }

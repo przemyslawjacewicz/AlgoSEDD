@@ -2,15 +2,16 @@
 
 ## Build
 ```shell script
-mvn clean package
+mvn clean package 
 ```
 
-## Setup
-### Spark
-#### Spark Version
+## Running
+### Local
+#### Setup
+##### Spark Version
 Use any Spark version compatible with Scala version used in the project.
 
-#### Spark History Server
+##### Spark History Server
 ```shell script
 # Create a dir for logs, default file:/tmp/spark-events
 mkdir /tmp/spark-events
@@ -19,9 +20,7 @@ mkdir /tmp/spark-events
 bash $SPARK_HOME/sbin/start-history-server.sh
 ```
 
-## Running
-### Run analyzer
-
+#### Execution
 ```shell script
 bash run.sh <main class> \
   <master> \ 
@@ -51,10 +50,25 @@ bash run.sh pl.epsilondeltalimit.analyzer.StackExchangeDataDumpAnalyzerSingle \
   /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/Tags.xml \
   /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/Users.xml \
   /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/Votes.xml \
-  output
+  output/8weeks
 ```
 
-### Create plots
+### GCP Dataproc example
+#### Setup
+TODO
+
+#### Execution
+```shell script
+gcloud dataproc jobs submit spark \
+    --cluster=cluster-5cff \
+    --class=pl.epsilondeltalimit.analyzer.StackExchangeDataDumpAnalyzerSingle \
+    --jars=gs://stack-exchange-data-dump-analyzer-single/StackExchangeDataDumpAnalyzerSingle-0.1-SNAPSHOT-jar-with-dependencies.jar \
+    --region=europe-west3 \
+    --driver-log-levels root=DEBUG \
+    -- 2010-01-01 2021-01-01 '13 weeks' gs://stack-exchange-data-dump/scifi.stackexchange.com/Badges.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Comments.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/PostHistory.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/PostLinks.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Posts.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Tags.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Users.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Votes.xml gs://stack-exchange-data-dump-analyzer-single/output/scifi.stackexchange.com/13weeks
+```
+
+## Create plots
 ```shell script
 # relative popularity
 bash scripts/relative_popularity_plot.sh \
