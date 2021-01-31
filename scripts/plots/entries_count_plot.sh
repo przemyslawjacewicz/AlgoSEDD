@@ -1,10 +1,23 @@
 #!/bin/bash
+# $1 - csv result file
+# $2 - tag name
+# $3 - aggregation interval, spaces removed
+# $4 - y axis max value
+# $5 - optional output dir, if missing will save in current dir
 
-FILE=$1
-TAG=$2
-AGGREGATION_INTERVAL=$3
-YMAX=$4
+FILE="$1"
+TAG="$2"
+AGGREGATION_INTERVAL="$3"
+YMAX="$4"
+DIR="$5"
 
+# if DIR is empty write result to current dir
+if [ -z $DIR ]
+then
+  DIR=$PWD
+fi
+
+# create plot
 gnuplot -persist <<-EOF
 set datafile separator ','
 
@@ -38,7 +51,7 @@ set style fill solid noborder
 set title '${TAG}   aggregation interval=${AGGREGATION_INTERVAL}'
 
 set terminal pngcairo size 800,600 enhanced font 'Segoe UI,10'
-set output 'entries_count__${TAG}_${AGGREGATION_INTERVAL}.png'
+set output '$DIR/entries_count__${TAG}_${AGGREGATION_INTERVAL}.png'
 
 plot '${FILE}' using 1:8 with boxes ls 106 title 'questions + answers + comments + votes + post history + post links',\
 '' using 1:7 with boxes ls 105 title 'questions + answers + comments + votes + post history',\
