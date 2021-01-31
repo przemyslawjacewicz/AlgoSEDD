@@ -13,7 +13,7 @@ import pl.epsilondeltalimit.analyzer.analyze.AnalyzeSupport._
 import pl.epsilondeltalimit.analyzer.read._
 
 //TODO: customize logging - add start and finish msg
-//TODO: optimization
+//TODO: optimize spark execution
 object StackExchangeDataDumpAnalyzerSingle {
   private[this] val logger = Logger.getLogger(StackExchangeDataDumpAnalyzerSingle.getClass.getSimpleName)
 
@@ -56,12 +56,26 @@ object StackExchangeDataDumpAnalyzerSingle {
     val votes = VotesFileReadSupport.read(spark, pathToVotesFile)
 
     logger.warn("Creating tags by post id map.")
-    val tagsByPostId = posts.as("postsL")
-      .join(posts.as("postsR"), when($"postsL.tags".isNotNull, $"postsL.id" === $"postsR.id").otherwise($"postsL.parent_id" === $"postsR.id"))
-      .select(
-        $"postsL.id".as("post_id"),
-        $"postsR.tags".as("tags")
-      )
+    val postIsQuestion = col("post_type_id") === 1 && not(isnull(col("tags"))) && size(col("tags")) =!= 0
+    val tagsByQuestionPostId = posts
+      .where(postIsQuestion)
+      .select(col("id").as("post_id"), col("tags"))
+    val postIsAnswer = col("post_type_id") === 2 && not(isnull(col("parent_id")))
+    val tagsByAnswerPostId = posts.as("posts")
+      .where(postIsAnswer)
+      .join(tagsByQuestionPostId.alias("tagsByQuestionPostId"), $"posts.parent_id" === $"tagsByQuestionPostId.post_id")
+      .select(col("id").as("post_id"), col("tagsByQuestionPostId.tags"))
+    val tagsByPostId = tagsByQuestionPostId
+      .union(tagsByAnswerPostId)
+
+    //TODO: this uses cartesian product !
+//    val tagsByPostId = posts.as("postsL")
+//      .join(posts.as("postsR"), when($"postsL.tags".isNotNull, $"postsL.id" === $"postsR.id").otherwise($"postsL.parent_id" === $"postsR.id"))
+//      .select(
+//        $"postsL.id".as("post_id"),
+//        $"postsR.tags".as("tags")
+//      )
+
     //    tagsByPostId.orderBy($"post_id".asc).show() //TODO: remove when implementation is finished
 
     logger.warn("Creating tags by creation date from questions.")
