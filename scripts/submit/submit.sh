@@ -4,13 +4,15 @@
 # $3+ - application arguments
 
 ARGS=("$@")
-APP="$1"
-MASTER="$2"
-APP_ARGS=("${ARGS[@]:2}")
+JAR="$1"
+APP="$2"
+MASTER="$3"
+APP_ARGS=("${ARGS[@]:3}")
 
 spark-submit \
   --master "$MASTER" \
   --packages "com.databricks:spark-xml_2.12:0.7.0","com.google.guava:guava:15.0" \
   --conf "spark.eventLog.enabled=true" \
   --conf "spark.eventLog.dir=file:/tmp/spark-events" \
-  --class "$APP" target/StackExchangeDataDumpAnalyzerSingle-0.1-SNAPSHOT.jar "${APP_ARGS[@]}"
+  --class "$APP" \
+  "$JAR" "${APP_ARGS[@]}"
