@@ -3,7 +3,7 @@
 
 set -x #debug mode - will print commands
 
-SOURCE_URI="$1"
+SOURCE_URI="${1%/}"
 
 FILENAME=${SOURCE_URI##*/}
 COMMUNITY_NAME=${FILENAME%.*}

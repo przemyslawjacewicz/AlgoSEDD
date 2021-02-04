@@ -2,7 +2,7 @@
 
 ## Build
 ```shell script
-mvn clean package 
+mvn clean package
 ```
 
 ## Running
@@ -22,7 +22,7 @@ bash $SPARK_HOME/sbin/start-history-server.sh
 
 #### Execution
 ```shell script
-bash run.sh <main class> \
+bash submit.sh <main class> \
   <master> \ 
   <start date> \
   <end date> \
@@ -37,7 +37,7 @@ bash run.sh <main class> \
   <votes input file> \
   <output file location>
 e.g.
-bash run.sh pl.epsilondeltalimit.analyzer.StackExchangeDataDumpAnalyzerSingle \
+bash submit.sh pl.epsilondeltalimit.analyzer.StackExchangeDataDumpAnalyzerSingle \
   local[2] \
   2010-01-01 \
   2021-01-01 \
@@ -71,14 +71,14 @@ gcloud dataproc jobs submit spark \
 ## Create plots
 ```shell script
 # relative popularity
-bash scripts/relative_popularity_plot.sh \
+bash scripts/relative_popularity_plot_tag.sh \
   <result file> \
   <tag name> \
   <aggregation interval> \
   <y axis max> \
   <y axis tics>
 e.g.
-bash scripts/relative_popularity_plot.sh \
+bash scripts/relative_popularity_plot_tag.sh \
   output/tag\=print-quality/part-00000-9b6e8399-3e48-4a97-a355-4b239b975515.c000.csv \
   print-quality \
   8weeks \
@@ -86,13 +86,13 @@ bash scripts/relative_popularity_plot.sh \
   0.1
 
 # entries count
-bash scripts/entries_count_plot.sh \
+bash scripts/entries_count_plot_tag.sh \
   <result file> \
   <tag name> \
   <aggregation interval> \
   <y axis max>
 e.g.
-bash scripts/entries_count_plot.sh \
+bash scripts/entries_count_plot_tag.sh \
   output/tag\=print-quality/part-00000-9b6e8399-3e48-4a97-a355-4b239b975515.c000.csv \
   print-quality \
   8weeks \
