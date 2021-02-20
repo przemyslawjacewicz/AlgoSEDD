@@ -1,4 +1,6 @@
 #!/bin/bash
+# creates relative popularity plot from single tag results
+
 # $1 - csv result file
 # $2 - tag name
 # $3 - aggregation interval, spaces removed
@@ -11,12 +13,12 @@ TAG="$2"
 AGGREGATION_INTERVAL="$3"
 YMAX="$4"
 YTICS="$5"
-DIR="$6"
+OUTPUT_DIR="$6"
 
-# if DIR is empty write result to current dir
-if [ -z $DIR ]
+# if OUTPUT_DIR is empty write result to current dir
+if [ -z "$OUTPUT_DIR" ]
 then
-  DIR=$PWD
+  OUTPUT_DIR=$PWD
 fi
 
 # create plot
@@ -51,7 +53,7 @@ set style line 106 lw 2 lt rgb '#73201b'
 set title '${TAG}     aggregation interval=${AGGREGATION_INTERVAL}'
 
 set terminal pngcairo size 800,600 enhanced font 'Segoe UI,10'
-set output '$DIR/relative_popularity__${TAG}_${AGGREGATION_INTERVAL}.png'
+set output '$OUTPUT_DIR/relative_popularity__${TAG}_${AGGREGATION_INTERVAL}.png'
 
 plot '$FILE' using 1:20 with lines ls 106 title 'questions + answers + comments + votes + post history + post links',\
   '' using 1:19 with lines ls 105 title 'questions + answers + comments + votes + post history',\
