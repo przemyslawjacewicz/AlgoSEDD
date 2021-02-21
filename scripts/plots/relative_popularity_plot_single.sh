@@ -10,18 +10,20 @@ RESULT_BUCKET_URI="${1%/}"
 # creates relative popularity plot from single tag results
 relative_popularity_plot_tag() {
   # $1 - csv result file
-  # $2 - tag name
+  # $2 - community name
   # $3 - aggregation interval, spaces removed
-  # $4 - y axis max value
-  # $5 - y axis tics value
-  # $6 - optional output dir, if missing will save in current dir
+  # $4 - tag name
+  # $5 - y axis max value
+  # $6 - y axis tics value
+  # $7 - optional output dir, if missing will save in current dir
 
   FILE="$1"
-  TAG="$2"
+  COMMUNITY_NAME="$2"
   AGGREGATION_INTERVAL="$3"
-  YMAX="$4"
-  YTICS="$5"
-  OUTPUT_DIR="$6"
+  TAG="$4"
+  YMAX="$5"
+  YTICS="$6"
+  OUTPUT_DIR="$7"
 
   # if OUTPUT_DIR is empty write result to current dir
   if [ -z "$OUTPUT_DIR" ]; then
@@ -57,10 +59,10 @@ set style line 104 lw 2 lt rgb '#f49e4c'
 set style line 105 lw 2 lt rgb '#ab3428'
 set style line 106 lw 2 lt rgb '#73201b'
 
-set title '${TAG}     aggregation interval=${AGGREGATION_INTERVAL}'
+set title 'community=${COMMUNITY_NAME}    aggregation interval=${AGGREGATION_INTERVAL}    ${TAG}'
 
 set terminal pngcairo size 800,600 enhanced font 'Segoe UI,10'
-set output '$OUTPUT_DIR/relative_popularity__${TAG}_${AGGREGATION_INTERVAL}.png'
+set output '$OUTPUT_DIR/relative_popularity.png'
 
 plot '$FILE' using 1:20 with lines ls 106 title 'questions + answers + comments + votes + post history + post links',\
   '' using 1:19 with lines ls 105 title 'questions + answers + comments + votes + post history',\
@@ -81,7 +83,7 @@ AGGREGATION_INTERVAL=$(ls "$WORKING_DIR"/"$COMMUNITY_NAME")
 
 for f in "$WORKING_DIR"/"$COMMUNITY_NAME"/"$AGGREGATION_INTERVAL"/*; do
   TAG_STR=${f##*/}
-  relative_popularity_plot_tag "$(ls "$f"/part*)" "$TAG_STR" "$AGGREGATION_INTERVAL" 1.0 0.1 "$f" #TODO: move 1.0 and 0.1 to script params
+  relative_popularity_plot_tag "$(ls "$f"/part*)" "$COMMUNITY_NAME" "$AGGREGATION_INTERVAL" "$TAG_STR" 1.0 0.1 "$f" #TODO: move 1.0 and 0.1 to script params
 done
 
 # syncing
