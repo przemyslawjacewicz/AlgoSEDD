@@ -1,48 +1,54 @@
 #!/bin/bash
+#TODO: add description
+#TODO: change the flow of this script - checkout git repo, create bucket with upload jar, run job with output set to new bucket
+#TODO: dependencies: git, java, maven
+
 # $1 - ???
 
 set -x #debug mode - will print commands
 
-REPO="https://github.com/przemyslawjacewicz/StackExchangeDataDumpAnalyzerSingle"
-
-ARGS=("$@")
-CLUSTER="$1"
-REGION="$2"
-APP_JAR_URI="$3" # can be a valid app jar uri
+REPO="$1" #"https://github.com/przemyslawjacewicz/StackExchangeDataDumpAnalyzerSingle"
+CLUSTER="$2"
+REGION="$3"
 APP="$4"
-APP_ARGS=("${ARGS[@]:4}")
+START_DATE="$5"
+END_DATE="$6"
+AGGREGATION_INTERVAL="$7"
+DUMP_BUCKET_URI="$8"
+COMMUNITY_NAME="$9"
 
-#check if already done
+WORKING_DIR=$(mktemp -d)
 
+# checkout repo
+git clone "$REPO" "$WORKING_DIR" #TODO: must supply credentials or be a public repo
 
-# check if APP_JAR_URI exists
-gsutil -q stat "$APP_JAR_URI"/* &> /dev/null
-APP_JAR_URI_EXISTS=$?
+# build jar
+(cd "$WORKING_DIR" && mvn clean package)
+APP_JAR=$(ls "$WORKING_DIR"/target/*-with-dependencies.jar)
+APP_JAR_NAME=${APP_JAR##*/}
 
-# if app jar is not uploaded then we build jar with dependencies and upload it to a bucket
-if [ APP_JAR_URI_EXISTS -ne 0 ]
-then
-  # build jar
-  WORKING_DIR=$(mktemp -d)
-  git clone "$REPO" "$WORKING_DIR" # must supply credentials or be a public repo
-  cd "$WORKING_DIR" && mvn clean package
-  APP_JAR_FILENAME=$(cd "$WORKING_DIR"/target && ls *-with-dependencies.jar)
-  LOCAL_APP_JAR="$WORKING_DIR"/target/"$APP_JAR_FILENAME"
+# create working bucket
+WORKING_BUCKET_NAME=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1) #probably only lower case letters are possible
+WORKING_BUCKET_URI=gs://"$WORKING_BUCKET_NAME"
+gsutil mb "$WORKING_BUCKET_URI"
 
-  # create bucket
-  APP_JAR_BUCKET_NAME=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1) #probably only lower case letters are possible
-  gsutil mb gs://"$APP_JAR_BUCKET_NAME"
-
-  # upload to a new bucket
-  gsutil cp "$LOCAL_APP_JAR" gs://"$APP_JAR_BUCKET_NAME"
-
-  APP_JAR_URI=gs://"$APP_JAR_BUCKET_NAME"/
-fi
+# upload to a working bucket
+gsutil cp "$APP_JAR" "$WORKING_BUCKET_URI"
+APP_JAR_URI="$WORKING_BUCKET_URI"/"$APP_JAR_NAME"
 
 # submit job
+BADGES_FILE_URI="$DUMP_BUCKET_URI"/"$COMMUNITY_NAME"/Badges.xml
+COMMENTS_FILE_URI="$DUMP_BUCKET_URI"/"$COMMUNITY_NAME"/Comments.xml
+POSTHISTORY_FILE_URI="$DUMP_BUCKET_URI"/"$COMMUNITY_NAME"/PostHistory.xml
+POSTLINKS_FILE_URI="$DUMP_BUCKET_URI"/"$COMMUNITY_NAME"/PostLinks.xml
+POSTS_FILE_URI="$DUMP_BUCKET_URI"/"$COMMUNITY_NAME"/Posts.xml
+TAGS_FILE_URI="$DUMP_BUCKET_URI"/"$COMMUNITY_NAME"/Tags.xml
+USERS_FILE_URI="$DUMP_BUCKET_URI"/"$COMMUNITY_NAME"/Users.xml
+VOTES_FILE_URI="$DUMP_BUCKET_URI"/"$COMMUNITY_NAME"/Votes.xml
+OUTPUT_DIR_URI="$WORKING_BUCKET_URI"/"$COMMUNITY_NAME"/"${AGGREGATION_INTERVAL// /}"
 gcloud dataproc jobs submit spark \
   --cluster="$CLUSTER" \
   --region="$REGION" \
   --jars="$APP_JAR_URI" \
   --class="$APP" \
-  -- "${APP_ARGS[@]}"
+  -- "$START_DATE" "$END_DATE" "$AGGREGATION_INTERVAL" "$BADGES_FILE_URI" "$COMMENTS_FILE_URI" "$POSTHISTORY_FILE_URI" "$POSTLINKS_FILE_URI" "$POSTS_FILE_URI" "$TAGS_FILE_URI" "$USERS_FILE_URI" "$VOTES_FILE_URI" "$OUTPUT_DIR_URI"
