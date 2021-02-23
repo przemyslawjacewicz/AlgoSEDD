@@ -5,7 +5,7 @@
 
 # $1 - ???
 
-set -x #debug mode - will print commands
+set -x    #debug mode - will print commands
 
 REPO="$1" #"https://github.com/przemyslawjacewicz/StackExchangeDataDumpAnalyzerSingle"
 CLUSTER="$2"
@@ -16,25 +16,34 @@ END_DATE="$6"
 AGGREGATION_INTERVAL="$7"
 DUMP_BUCKET_URI="$8"
 COMMUNITY_NAME="$9"
+WORKING_BUCKET_URI="${10}" #optional
 
-WORKING_DIR=$(mktemp -d)
+# if WORKING_BUCKET_URI is empty create the bucket
+if [ -z "$WORKING_BUCKET_URI" ]; then
+  WORKING_BUCKET_NAME=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1) #TODO: consider different naming pattern
+  WORKING_BUCKET_URI=gs://"$WORKING_BUCKET_NAME"
+  gsutil mb "$WORKING_BUCKET_URI" #todo: add region
+fi
 
-# checkout repo
-git clone "$REPO" "$WORKING_DIR" #TODO: must supply credentials or be a public repo
+# if no app jar in result bucket build and uplod it
+APP_JAR_URI=$(gsutil ls "$WORKING_BUCKET_URI"/*.jar)
+APP_JAR_EXISTS=$(expr match "$APP_JAR_URI" "$WORKING_BUCKET_URI")
+if [ "$APP_JAR_EXISTS" -eq 0 ]; then
+  # create temp working dir
+  WORKING_DIR=$(mktemp -d)
 
-# build jar
-(cd "$WORKING_DIR" && mvn clean package)
-APP_JAR=$(ls "$WORKING_DIR"/target/*-with-dependencies.jar)
-APP_JAR_NAME=${APP_JAR##*/}
+  # checkout repo
+  git clone "$REPO" "$WORKING_DIR" #TODO: must supply credentials or be a public repo
 
-# create working bucket
-WORKING_BUCKET_NAME=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1) #probably only lower case letters are possible
-WORKING_BUCKET_URI=gs://"$WORKING_BUCKET_NAME"
-gsutil mb "$WORKING_BUCKET_URI"
+  # build jar
+  (cd "$WORKING_DIR" && mvn clean package)
+  APP_JAR=$(ls "$WORKING_DIR"/target/*-with-dependencies.jar)
+  APP_JAR_NAME=${APP_JAR##*/}
 
-# upload to a working bucket
-gsutil cp "$APP_JAR" "$WORKING_BUCKET_URI"
-APP_JAR_URI="$WORKING_BUCKET_URI"/"$APP_JAR_NAME"
+  # upload to a working bucket
+  gsutil cp "$APP_JAR" "$WORKING_BUCKET_URI"
+  APP_JAR_URI="$WORKING_BUCKET_URI"/"$APP_JAR_NAME"
+fi
 
 # submit job
 BADGES_FILE_URI="$DUMP_BUCKET_URI"/"$COMMUNITY_NAME"/Badges.xml
