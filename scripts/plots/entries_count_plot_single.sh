@@ -1,4 +1,5 @@
 #!/bin/bash
+``#TODO: add dependecies
 # creates relative popularity plots for all tags in a result bucket
 
 # $1 - result bucket uri that is if results are in gs://plot-creation-testing_001/stackoverflow.com/8weeks this should be gs://plot-creation-testing_001
@@ -60,7 +61,7 @@ set style fill solid noborder
 set title '${TAG}   aggregation interval=${AGGREGATION_INTERVAL}'
 
 set terminal pngcairo size 800,600 enhanced font 'Segoe UI,10'
-set output '$OUTPUT_DIR/entries_count__${TAG}_${AGGREGATION_INTERVAL}.png'
+set output '$OUTPUT_DIR/entries_count.png'
 
 plot '${FILE}' using 1:8 with boxes ls 106 title 'questions + answers + comments + votes + post history + post links',\
 '' using 1:7 with boxes ls 105 title 'questions + answers + comments + votes + post history',\

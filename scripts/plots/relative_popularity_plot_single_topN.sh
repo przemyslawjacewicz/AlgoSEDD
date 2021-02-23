@@ -1,5 +1,6 @@
 #!/bin/bash
 #TODO: add dependecies
+#TODO: add position number formatting 000,001,...
 # creates relative popularity plots for top N tags in a result bucket
 
 # $1 - result bucket uri e.g. gs://plot-creation-testing_001/stackoverflow.com/8weeks

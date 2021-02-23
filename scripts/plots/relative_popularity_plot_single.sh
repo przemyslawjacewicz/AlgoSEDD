@@ -1,4 +1,5 @@
 #!/bin/bash
+#TODO: add dependecies
 # creates relative popularity plots for all tags in a result bucket
 
 # $1 - result bucket uri that is if results are in gs://plot-creation-testing_001/stackoverflow.com/8weeks this should be gs://plot-creation-testing_001
