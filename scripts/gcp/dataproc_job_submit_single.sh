@@ -1,48 +1,42 @@
 #!/bin/bash
 #TODO: add description
-#TODO: change the flow of this script - checkout git repo, create bucket with upload jar, run job with output set to new bucket
-#TODO: dependencies: git, java, maven
+#dependencies: git, java, maven
 
-# $1 - ???
+set -x                    #debug mode - will print commands
 
-set -x    #debug mode - will print commands
-
-REPO="$1" #"https://github.com/przemyslawjacewicz/StackExchangeDataDumpAnalyzerSingle"
-CLUSTER="$2"
-REGION="$3"
-APP="$4"
-START_DATE="$5"
-END_DATE="$6"
-AGGREGATION_INTERVAL="$7"
-DUMP_BUCKET_URI="$8"
-COMMUNITY_NAME="$9"
-WORKING_BUCKET_URI="${10}" #optional
+CLUSTER="$1"              #e.g. cluster-202d
+REGION="$2"               #e.g. europe-west3
+DUMP_BUCKET_URI="$3"      #e.g. gs://stack-exchange-data-dump/2020-12-08
+COMMUNITY_NAME="$4"       #e.g. 3dprinting.stackexchange.com
+AGGREGATION_INTERVAL="$5" #must be a valid Spark interval e.g. '12 weeks'
+START_DATE="$6"           #e.g. 2010-01-01
+END_DATE="$7"             #e.g. 2021-01-01
+WORKING_BUCKET_URI="$8"   #optional e.g. gs://1a2b3c4d
 
 # if WORKING_BUCKET_URI is empty create the bucket
 if [ -z "$WORKING_BUCKET_URI" ]; then
-  WORKING_BUCKET_NAME=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1) #TODO: consider different naming pattern
-  WORKING_BUCKET_URI=gs://"$WORKING_BUCKET_NAME"
-  gsutil mb "$WORKING_BUCKET_URI" #todo: add region
+  working_bucket_name=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1) #TODO: consider different naming pattern
+  WORKING_BUCKET_URI=gs://"$working_bucket_name"
+  gsutil mb -l "$REGION" "$WORKING_BUCKET_URI"
 fi
 
 # if no app jar in result bucket build and uplod it
 APP_JAR_URI=$(gsutil ls "$WORKING_BUCKET_URI"/*.jar)
-APP_JAR_EXISTS=$(expr match "$APP_JAR_URI" "$WORKING_BUCKET_URI")
-if [ "$APP_JAR_EXISTS" -eq 0 ]; then
+if [ -z "$APP_JAR_URI" ]; then
   # create temp working dir
-  WORKING_DIR=$(mktemp -d)
+  working_dir=$(mktemp -d)
 
   # checkout repo
-  git clone "$REPO" "$WORKING_DIR" #TODO: must supply credentials or be a public repo
+  git clone https://github.com/przemyslawjacewicz/StackExchangeDataDumpAnalyzerSingle "$working_dir" #TODO: must supply credentials or be a public repo
 
   # build jar
-  (cd "$WORKING_DIR" && mvn clean package)
-  APP_JAR=$(ls "$WORKING_DIR"/target/*-with-dependencies.jar)
-  APP_JAR_NAME=${APP_JAR##*/}
+  (cd "$working_dir" && mvn clean package)
+  app_jar=$(ls "$working_dir"/target/*-with-dependencies.jar)
+  app_jar_name=${app_jar##*/}
 
   # upload to a working bucket
-  gsutil cp "$APP_JAR" "$WORKING_BUCKET_URI"
-  APP_JAR_URI="$WORKING_BUCKET_URI"/"$APP_JAR_NAME"
+  gsutil cp "$app_jar" "$WORKING_BUCKET_URI"
+  APP_JAR_URI="$WORKING_BUCKET_URI"/"$app_jar_name"
 fi
 
 # submit job
@@ -59,5 +53,5 @@ gcloud dataproc jobs submit spark \
   --cluster="$CLUSTER" \
   --region="$REGION" \
   --jars="$APP_JAR_URI" \
-  --class="$APP" \
+  --class=pl.epsilondeltalimit.analyzer.StackExchangeDataDumpAnalyzerSingle \
   -- "$START_DATE" "$END_DATE" "$AGGREGATION_INTERVAL" "$BADGES_FILE_URI" "$COMMENTS_FILE_URI" "$POSTHISTORY_FILE_URI" "$POSTLINKS_FILE_URI" "$POSTS_FILE_URI" "$TAGS_FILE_URI" "$USERS_FILE_URI" "$VOTES_FILE_URI" "$OUTPUT_DIR_URI"
