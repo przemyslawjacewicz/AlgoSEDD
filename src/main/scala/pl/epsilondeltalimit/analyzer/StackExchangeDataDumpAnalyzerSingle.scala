@@ -46,13 +46,14 @@ object StackExchangeDataDumpAnalyzerSingle {
     val dateFilter = lit(true)
 
     logger.warn("Reading data from dump files.")
-    val badges = BadgesFileReadSupport.read(spark, pathToBadgesFile)
+//    val badges = BadgesFileReadSupport.read(spark, pathToBadgesFile)
     val comments = CommentsFileReadSupport.read(spark, pathToCommentsFile)
     val postHistory = PostHistoryFileReadSupport.read(spark, pathToPostHistoryFile)
     val postLinks = PostLinksFileReadSupport.read(spark, pathToPostLinksFile)
     val posts = PostsFileReadSupport.read(spark, pathToPostsFile)
     val tags = TagsFileReadSupport.read(spark, pathToTagsFile)
     val users = UsersFileReadSupport.read(spark, pathToUsersFile)
+    val users2 = UsersFileReadSupport.read(spark, pathToUsersFile)
     val votes = VotesFileReadSupport.read(spark, pathToVotesFile)
 
     logger.warn("Creating tags by post id map.")
