@@ -19,7 +19,7 @@ object StackExchangeDataDumpAnalyzerSingle {
   private[this] val logger = Logger.getLogger(StackExchangeDataDumpAnalyzerSingle.getClass.getSimpleName)
 
   def main(args: Array[String]): Unit = {
-    throw new NullPointerException
+    throw new NullPointerException()
 
     val startDate = args(0)
     val endDate = args(1)
