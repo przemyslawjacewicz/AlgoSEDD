@@ -21,6 +21,8 @@ object StackExchangeDataDumpAnalyzerSingle {
   def main(args: Array[String]): Unit = {
     None.get
 
+    throw new RuntimeException
+
     val startDate = args(0)
     val endDate = args(1)
     val aggregationInterval = args(2)
