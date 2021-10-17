@@ -1,21 +1,21 @@
-package pl.epsilondeltalimit.analyzer
-
-import java.sql.Date
-import java.time.format.DateTimeFormatter
-import java.time.{Duration, LocalDate}
+package pl.epsilondeltalimit
 
 import org.apache.log4j.Logger
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
 import org.apache.spark.sql.{RowFactory, SaveMode, SparkSession}
-import pl.epsilondeltalimit.analyzer.analyze.AnalyzeSupport._
-import pl.epsilondeltalimit.analyzer.read._
+import pl.epsilondeltalimit.analyze.AnalyzeSupport.{countEntriesByCreationDateAndTag, postRecordIsAnswer, postRecordIsQuestion}
+import pl.epsilondeltalimit.read._
+
+import java.sql.Date
+import java.time.format.DateTimeFormatter
+import java.time.{Duration, LocalDate}
 
 //TODO: customize logging - add start and finish msg
 //TODO: optimize spark execution
-object StackExchangeDataDumpAnalyzerSingle {
-  private[this] val logger = Logger.getLogger(StackExchangeDataDumpAnalyzerSingle.getClass.getSimpleName)
+object TagPopSEDD {
+  private[this] val logger = Logger.getLogger(TagPopSEDD.getClass.getSimpleName)
 
   def main(args: Array[String]): Unit = {
     val startDate = args(0)
@@ -32,7 +32,7 @@ object StackExchangeDataDumpAnalyzerSingle {
     val pathToOutput = args(11)
 
     val conf = new SparkConf()
-    conf.setAppName(StackExchangeDataDumpAnalyzerSingle.getClass.getSimpleName)
+    conf.setAppName(TagPopSEDD.getClass.getSimpleName)
     //    conf.setMaster("local[2]") //TODO: set to proper value when run on cluster
 
     val spark = SparkSession.builder()
@@ -69,12 +69,12 @@ object StackExchangeDataDumpAnalyzerSingle {
       .union(tagsByAnswerPostId)
 
     //TODO: this uses cartesian product !
-//    val tagsByPostId = posts.as("postsL")
-//      .join(posts.as("postsR"), when($"postsL.tags".isNotNull, $"postsL.id" === $"postsR.id").otherwise($"postsL.parent_id" === $"postsR.id"))
-//      .select(
-//        $"postsL.id".as("post_id"),
-//        $"postsR.tags".as("tags")
-//      )
+    //    val tagsByPostId = posts.as("postsL")
+    //      .join(posts.as("postsR"), when($"postsL.tags".isNotNull, $"postsL.id" === $"postsR.id").otherwise($"postsL.parent_id" === $"postsR.id"))
+    //      .select(
+    //        $"postsL.id".as("post_id"),
+    //        $"postsR.tags".as("tags")
+    //      )
 
     //    tagsByPostId.orderBy($"post_id".asc).show() //TODO: remove when implementation is finished
 

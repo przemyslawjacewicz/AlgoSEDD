@@ -1,11 +1,12 @@
-package pl.epsilondeltalimit.analyzer.read
+package pl.epsilondeltalimit.read
 
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions.to_date
 import org.apache.spark.sql.types.DataTypes._
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import pl.epsilondeltalimit.analyzer.support.storage.XmlFileStorage
+import pl.epsilondeltalimit.epsilondeltalimit.withColumnNamesNormalized
+import pl.epsilondeltalimit.storage.XmlFileStorage
 
 object BadgesFileReadSupport {
   private[this] val logger = Logger.getLogger(BadgesFileReadSupport.getClass.getSimpleName)

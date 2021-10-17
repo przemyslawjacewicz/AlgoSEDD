@@ -1,4 +1,4 @@
-package pl.epsilondeltalimit.analyzer.analyze
+package pl.epsilondeltalimit.analyze
 
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions.{col, count, explode, isnull, lit, not, size}

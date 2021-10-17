@@ -1,4 +1,4 @@
-package pl.epsilondeltalimit.analyzer.support.storage
+package pl.epsilondeltalimit.storage
 
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}

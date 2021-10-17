@@ -1,24 +1,22 @@
-package pl.epsilondeltalimit.analyzer.read
+package pl.epsilondeltalimit.read
 
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions.{quarter, to_date, year}
 import org.apache.spark.sql.types.DataTypes._
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import pl.epsilondeltalimit.analyzer.support.storage.XmlFileStorage
+import pl.epsilondeltalimit.epsilondeltalimit.withColumnNamesNormalized
+import pl.epsilondeltalimit.storage.XmlFileStorage
 
-object PostLinksFileReadSupport {
-  private[this] val logger = Logger.getLogger(PostLinksFileReadSupport.getClass.getSimpleName)
+object VotesFileReadSupport {
+  private[this] val logger = Logger.getLogger(VotesFileReadSupport.getClass.getSimpleName)
 
   private[this] val Schema: StructType = StructType(Array(
     StructField("_Id", LongType),
-    StructField("_PostHistoryTypeId", IntegerType),
     StructField("_PostId", LongType),
-    StructField("_RevisionGUID", StringType),
-    StructField("_CreationDate", StringType),
+    StructField("_VoteTypeId", IntegerType),
     StructField("_UserId", LongType),
-    StructField("_Text", StringType),
-    StructField("_Comment", StringType)
+    StructField("_CreationDate", StringType)
   ))
 
   def read(spark: SparkSession, path: String): DataFrame = {
@@ -28,14 +26,10 @@ object PostLinksFileReadSupport {
     val dataFromFile = new XmlFileStorage(spark).readFromXmlFile("row", Schema, path)
     withColumnNamesNormalized(dataFromFile)
       .select($"id",
-        $"post_history_type_id",
         $"post_id",
-        $"revision_g_u_i_d".as("revision_guid"),
-        to_date($"creation_date".cast(TimestampType)).as("creation_date"),
+        $"vote_type_id",
         $"user_id",
-        $"text",
-        $"comment"
-      )
+        to_date($"creation_date".cast(TimestampType)).as("creation_date"))
       .withColumn("year", year($"creation_date"))
       .withColumn("quarter", quarter($"creation_date"))
   }
