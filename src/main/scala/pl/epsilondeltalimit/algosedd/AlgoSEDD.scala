@@ -1,137 +1,91 @@
-package pl.epsilondeltalimit
+package pl.epsilondeltalimit.algosedd
 
-import org.apache.log4j.Logger
-import org.apache.spark.SparkConf
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
-import org.apache.spark.sql.{RowFactory, SaveMode, SparkSession}
-import pl.epsilondeltalimit.analyze.AnalyzeSupport.{countEntriesByCreationDateAndTag, postRecordIsAnswer, postRecordIsQuestion}
-import pl.epsilondeltalimit.read._
-
-import java.sql.Date
-import java.time.format.DateTimeFormatter
-import java.time.{Duration, LocalDate}
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.lit
+import pl.epsilondeltalimit.dep.v6_1.Catalog
 
 //TODO: customize logging - add start and finish msg
 //TODO: optimize spark execution
-object TagPopSEDD {
-  private[this] val logger = Logger.getLogger(TagPopSEDD.getClass.getSimpleName)
+object AlgoSEDD extends Logging {
 
   def main(args: Array[String]): Unit = {
+
+    val catalog = new Catalog
+
     val startDate = args(0)
+    catalog.unit("startDate")(startDate)
+
     val endDate = args(1)
+    catalog.unit("endDate")(endDate)
+
     val aggregationInterval = args(2)
-    val pathToBadgesFile = args(3)
-    val pathToCommentsFile = args(4)
-    val pathToPostHistoryFile = args(5)
-    val pathToPostLinksFile = args(6)
-    val pathToPostsFile = args(7)
-    val pathToTagsFile = args(8)
-    val pathToUsersFile = args(9)
-    val pathToVotesFile = args(10)
-    val pathToOutput = args(11)
+    catalog.unit("aggregationInterval")(aggregationInterval)
 
-    val conf = new SparkConf()
-    conf.setAppName(TagPopSEDD.getClass.getSimpleName)
-    //    conf.setMaster("local[2]") //TODO: set to proper value when run on cluster
+    val rootPath = args(3)
+    catalog.unit("rootPath")(rootPath)
 
-    val spark = SparkSession.builder()
-      .config(conf)
-      .getOrCreate()
-    import spark.implicits._
+    val pathToOutput = args(4)
+    catalog.unit("pathToOutput")(pathToOutput)
 
+    //todo: remove me
     // NOTE: date filter applicable only for testing
     //    val dateFilter = $"creation_date" > "2017-12-31" && $"creation_date" < "2019-01-01"
     //    val dateFilter = $"creation_date" > "2019-05-31" && $"creation_date" < "2019-07-01"
     val dateFilter = lit(true)
 
-    logger.warn("Reading data from dump files.")
-    val badges = BadgesFileReadSupport.read(spark, pathToBadgesFile)
-    val comments = CommentsFileReadSupport.read(spark, pathToCommentsFile)
-    val postHistory = PostHistoryFileReadSupport.read(spark, pathToPostHistoryFile)
-    val postLinks = PostLinksFileReadSupport.read(spark, pathToPostLinksFile)
-    val posts = PostsFileReadSupport.read(spark, pathToPostsFile)
-    val tags = TagsFileReadSupport.read(spark, pathToTagsFile)
-    val users = UsersFileReadSupport.read(spark, pathToUsersFile)
-    val votes = VotesFileReadSupport.read(spark, pathToVotesFile)
+    //    logger.warn("Reading data from dump files.")
+    //    val pathToPostsFile = s"$rootPath/Posts.xml"
+    //    val pathToTagsFile = s"$rootPath/Tags.xml"
+    //    val pathToUsersFile = s"$rootPath/Users.xml"
+    //    val pathToVotesFile = s"$rootPath/Votes.xml"
 
-    logger.warn("Creating tags by post id map.")
-    val postIsQuestion = col("post_type_id") === 1 && not(isnull(col("tags"))) && size(col("tags")) =!= 0
-    val tagsByQuestionPostId = posts
-      .where(postIsQuestion)
-      .select(col("id").as("post_id"), col("tags"))
-    val postIsAnswer = col("post_type_id") === 2 && not(isnull(col("parent_id")))
-    val tagsByAnswerPostId = posts.as("posts")
-      .where(postIsAnswer)
-      .join(tagsByQuestionPostId.alias("tagsByQuestionPostId"), $"posts.parent_id" === $"tagsByQuestionPostId.post_id")
-      .select(col("id").as("post_id"), col("tagsByQuestionPostId.tags"))
-    val tagsByPostId = tagsByQuestionPostId
-      .union(tagsByAnswerPostId)
+    //todo: convert to reflection-based transformation retrieval
+    val transformations = Set(
+      SparkSessionProvider,
+      read.badges.BadgesFilePathProvider,
+      read.badges.BadgesFileContentProvider,
+      read.comments.CommentsFilePathProvider,
+      read.comments.CommentsFileContentProvider,
+      read.posthistory.PostHistoryFilePathProvider,
+      read.posthistory.PostHistoryFileContentProvider,
+      read.postlinks.PostLinksFilePathProvider,
+      read.postlinks.PostLinksFileContentProvider,
+      read.posts.PostsFilePathProvider,
+      read.posts.PostsFileContentProvider,
+      read.tags.TagsFilePathProvider,
+      read.tags.TagsFileContentProvider,
+      read.users.UsersFilePathProvider,
+      read.users.UsersFileContentProvider,
+      read.votes.VotesFilePathProvider,
+      read.votes.VotesFileContentProvider,
+      analyze.TagsByQuestionPostId,
+      analyze.TagsByAnswerPostId,
+      analyze.TagsByPostId,
+      analyze.TagsByCreationDataFromQuestions,
+      analyze.TagsByCreationDataFromAnswers,
+      analyze.TagsByCreationDataFromComments,
+      analyze.TagsByCreationDataFromVotes,
+      analyze.TagsByCreationDataFromPostHistory,
+      analyze.TagsByCreationDataFromPostLinks,
+      analyze.DataEntriesCountByCreationDateAndTag
 
-    //TODO: this uses cartesian product !
-    //    val tagsByPostId = posts.as("postsL")
-    //      .join(posts.as("postsR"), when($"postsL.tags".isNotNull, $"postsL.id" === $"postsR.id").otherwise($"postsL.parent_id" === $"postsR.id"))
-    //      .select(
-    //        $"postsL.id".as("post_id"),
-    //        $"postsR.tags".as("tags")
-    //      )
+    )
 
-    //    tagsByPostId.orderBy($"post_id".asc).show() //TODO: remove when implementation is finished
 
-    logger.warn("Creating tags by creation date from questions.")
-    val tagsByCreationDataFromQuestions = posts.as("posts")
-      .where(postRecordIsQuestion)
-      .join(tagsByPostId.as("tagsByPostId"), $"posts.id" === $"tagsByPostId.post_id")
-      .select($"creation_date", $"tagsByPostId.tags")
-    //    tagsByCreationDataFromQuestions.show() //TODO: remove when implementation is finished
+    val output = transformations.foldLeft(catalog)((_c, _t) => _t(_c))
 
-    logger.warn("Creating tags by creation date from answers.")
-    val tagsByCreationDataFromAnswers = posts.as("posts")
-      .where(postRecordIsAnswer)
-      .join(tagsByPostId.as("tagsByPostId"), $"posts.id" === $"tagsByPostId.post_id")
-      .select($"creation_date", $"tagsByPostId.tags")
-    //    tagsByCreationDataFromAnswers.show() //TODO: remove when implementation is finished
+//    output.eval[DataFrame]("badges").show()
+//    output.eval[DataFrame]("comments").show()
+//    output.eval[DataFrame]("postHistory").show()
+//    output.eval[DataFrame]("postLinks").show()
+//    output.eval[DataFrame]("posts").show()
+//    output.eval[DataFrame]("tags").show()
+//    output.eval[DataFrame]("users").show()
+//    output.eval[DataFrame]("votes").show()
 
-    logger.warn("Creating tags by post creation date from comments.")
-    val tagsByCreationDataFromComments = comments
-      .join(tagsByPostId, "post_id")
-      .select($"creation_date", $"tags")
-    //    tagsByCreationDataFromComments.show() //TODO: remove when implementation is finished
+    output.eval[DataFrame]("dataEntriesCountByCreationDateAndTag").show()
 
-    logger.warn("Creating tags by post creation date from votes.")
-    val tagsByCreationDataFromVotes = votes
-      .join(tagsByPostId, "post_id")
-      .select($"creation_date", $"tags")
-    //    tagsByCreationDataFromVotes.show() //TODO: remove when implementation is finished
-
-    logger.warn("Creating tags by post creation date from post history.")
-    val tagsByCreationDataFromPostHistory = postHistory
-      .join(tagsByPostId, "post_id")
-      .select($"creation_date", $"tags")
-    //    tagsByCreationDataFromPostHistory.show() //TODO: remove when implementation is finished
-
-    logger.warn("Creating tags by post creation date from post links.")
-    val tagsByCreationDataFromPostLinks = postLinks
-      .join(tagsByPostId, "post_id")
-      .select($"creation_date", $"tags")
-    //    tagsByCreationDataFromPostLinks.show() //TODO: remove when implementation is finished
-
-    logger.warn("Counting entries by creation date and tag.")
-    val creationDateAndTag = Seq("creation_date", "tag")
-    val dataEntriesCountByCreationDateAndTag = countEntriesByCreationDateAndTag(tagsByCreationDataFromQuestions)
-      .withColumnRenamed("count", "q__entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromAnswers), creationDateAndTag)
-      .withColumnRenamed("count", "a__entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromComments), creationDateAndTag)
-      .withColumnRenamed("count", "c__entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromVotes), creationDateAndTag)
-      .withColumnRenamed("count", "v__entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromPostHistory), creationDateAndTag)
-      .withColumnRenamed("count", "ph__entries_count_for_day_and_tag")
-      .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromPostLinks), creationDateAndTag)
-      .withColumnRenamed("count", "pl__entries_count_for_day_and_tag")
-    //    dataEntriesCountByCreationDateAndTag.show() //TODO: remove when implementation is finished
-
+    /*
     //TODO: move to support
     val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val daysBetween = Duration.between(LocalDate.parse(startDate, fmt).atStartOfDay(), LocalDate.parse(endDate, fmt).atStartOfDay()).toDays
@@ -139,6 +93,7 @@ object TagPopSEDD {
       spark.sparkContext.parallelize(for (day <- 0L to daysBetween) yield RowFactory.create(Date.valueOf(LocalDate.parse(startDate, fmt).plusDays(day)))),
       StructType(Array(StructField("creation_date", DataTypes.DateType))))
     //    val days = (for (day <- 0L to daysBetween) yield LocalDate.parse(startDate, fmt).plusDays(day)).toDF("creation_date")
+
     val daysAndTags = days
       .crossJoin(tags.select($"tag_name".as("tag")))
     //    daysAndTags.show() //TODO: remove when implementation is finished
@@ -280,5 +235,7 @@ object TagPopSEDD {
       .save(pathToOutput)
 
     logger.warn("Done. Exiting.")
+
+     */
   }
 }

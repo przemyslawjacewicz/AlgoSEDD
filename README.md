@@ -1,8 +1,8 @@
-# StackExchangeDataDumpAnalyzerSingle
+# AlgoSEDD [TO BE UPDATED]
 
 ## Build
 ```shell script
-mvn clean package
+# (mvn clean package)
 ```
 
 ## Running

@@ -1,18 +1,17 @@
 #!/bin/bash
-# $1 - application to run
-# $2 - master
-# $3+ - application arguments
+# $1 - ???
 
-ARGS=("$@")
 JAR="$1"
-APP="$2"
-MASTER="$3"
-APP_ARGS=("${ARGS[@]:3}")
+MASTER="$2"
+START_DATE="$3"
+END_DATE="$4"
+AGGREGATION_INTERVAL="$5"
+DUMP_DIR="$6"
+OUTPUT_DIR="$7"
 
 spark-submit \
   --master "$MASTER" \
-  --packages "com.databricks:spark-xml_2.12:0.7.0","com.google.guava:guava:15.0" \
   --conf "spark.eventLog.enabled=true" \
   --conf "spark.eventLog.dir=file:/tmp/spark-events" \
-  --class "$APP" \
-  "$JAR" "${APP_ARGS[@]}"
+  --class pl.epsilondeltalimit.algosedd.AlgoSEDD \
+  "$JAR" "$START_DATE" "$END_DATE" "$AGGREGATION_INTERVAL" "$DUMP_DIR" "$OUTPUT_DIR"
