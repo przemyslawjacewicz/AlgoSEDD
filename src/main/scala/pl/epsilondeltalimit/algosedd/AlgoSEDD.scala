@@ -1,14 +1,11 @@
 package pl.epsilondeltalimit.algosedd
 
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
-import pl.epsilondeltalimit.algosedd.write.{RelativePopularityByAggregationIntervalAndTagStorage, TagsStorage}
 import pl.epsilondeltalimit.dep.v6_1.Catalog
 
 import java.time.LocalDate
 
 //TODO: customize logging - add start and finish msg
-//TODO: optimize spark execution
 object AlgoSEDD extends Logging {
 
   def main(args: Array[String]): Unit = {
@@ -35,12 +32,6 @@ object AlgoSEDD extends Logging {
     //    val dateFilter = $"creation_date" > "2017-12-31" && $"creation_date" < "2019-01-01"
     //    val dateFilter = $"creation_date" > "2019-05-31" && $"creation_date" < "2019-07-01"
     val dateFilter = lit(true)
-
-    //    logger.warn("Reading data from dump files.")
-    //    val pathToPostsFile = s"$rootPath/Posts.xml"
-    //    val pathToTagsFile = s"$rootPath/Tags.xml"
-    //    val pathToUsersFile = s"$rootPath/Users.xml"
-    //    val pathToVotesFile = s"$rootPath/Votes.xml"
 
     // todo: convert to reflection-based transformation retrieval
     val transformations = Set(
@@ -82,7 +73,8 @@ object AlgoSEDD extends Logging {
       write.TagsStorage
     )
 
-    val output = transformations.foldLeft(catalog)((_c, _t) => _t(_c))
+//    val output = transformations.foldLeft(catalog)((c, t) => t(c))
+    val output = transformations.foldRight(catalog)(_(_))
 
     output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
 

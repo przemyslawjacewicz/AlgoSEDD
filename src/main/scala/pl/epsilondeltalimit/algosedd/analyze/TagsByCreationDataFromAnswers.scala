@@ -8,7 +8,6 @@ import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
 object TagsByCreationDataFromAnswers extends Transformation with Logging {
   override def apply(c: Catalog): Catalog =
     c.put {
-
       Dep.map2("tagsByCreationDataFromAnswers")(c.get[DataFrame]("posts"), c.get[DataFrame]("tagsByPostId")) {
         (posts, tagsByPostId) =>
           logger.warn("Creating tags by creation date from answers.")
