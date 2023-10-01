@@ -4,7 +4,6 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.algosedd.read.XmlFileStorage
 import pl.epsilondeltalimit.algosedd.read.implicits._
 import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
 
@@ -25,8 +24,8 @@ object BadgesFileContentProvider extends Transformation with Logging {
       Dep.map2("badges")(c.get[SparkSession]("spark"), c.get[String]("pathToBadgesFile")) { (spark, pathToBadgesFile) =>
         logger.warn(s"Loading data from file: $pathToBadgesFile.")
 
-        new XmlFileStorage(spark)
-          .readFromFile("row", Schema, pathToBadgesFile)
+        spark
+          .readFromXmlFile(Schema, pathToBadgesFile)
           .withColumnNamesNormalized
           .select(
             col("id"),

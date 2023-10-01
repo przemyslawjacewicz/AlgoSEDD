@@ -1,11 +1,11 @@
-# AlgoSEDD [TO BE UPDATED]
+# AlgoSEDD
 
-## Build
+## Build assembly
 ```shell script
-# (mvn clean package)
+sbt assembly
 ```
 
-## Running
+## Run
 ### Local
 #### Setup
 ##### Spark Version
@@ -22,40 +22,20 @@ bash $SPARK_HOME/sbin/start-history-server.sh
 
 #### Execution
 ```shell script
-bash submit.sh <main class> \
-  <master> \ 
-  <start date> \
-  <end date> \
-  <aggregation interval> \
-  <badges input file> \
-  <comments input file> \
-  <post history input file> \
-  <post links input file> \
-  <posts input file> \
-  <tags input file> \
-  <users input file> \
-  <votes input file> \
-  <output file location>
-e.g.
-bash submit.sh pl.epsilondeltalimit.analyzer.StackExchangeDataDumpAnalyzerSingle \
+bash scripts/generic/submit.sh \
+  target/scala-2.12/AlgoSEDD-assembly-0.1-SNAPSHOT.jar \ 
   local[2] \
   2010-01-01 \
-  2021-01-01 \
+  2022-01-01 \
   '8 weeks' \
-  /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/Badges.xml \
-  /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/Comments.xml \
-  /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/PostHistory.xml \
-  /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/PostLinks.xml \
-  /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/Posts.xml \
-  /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/Tags.xml \
-  /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/Users.xml \
-  /mnt/datastore/data/StackExchangeDataDump/2020-12-08/3dprinting.stackexchange.com/Votes.xml \
-  output/8weeks
+  /mnt/datastore/data/StackExchangeDataDump/2021-06-07/3dprinting.meta.stackexchange.com \
+  target/output/
 ```
 
-### GCP Dataproc example
+### GCP Dataproc [TODO: UPDATE]
 #### Setup
-TODO
+##### Spark Version
+Use any Spark version compatible with Scala version used in the project.
 
 #### Execution
 ```shell script
@@ -68,35 +48,28 @@ gcloud dataproc jobs submit spark \
     -- 2010-01-01 2021-01-01 '13 weeks' gs://stack-exchange-data-dump/scifi.stackexchange.com/Badges.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Comments.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/PostHistory.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/PostLinks.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Posts.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Tags.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Users.xml gs://stack-exchange-data-dump/scifi.stackexchange.com/Votes.xml gs://stack-exchange-data-dump-analyzer-single/output/scifi.stackexchange.com/13weeks
 ```
 
-## Create plots
+## Plot
+### Local
 ```shell script
 # relative popularity
-bash scripts/relative_popularity_plot_tag.sh \
-  <result file> \
-  <tag name> \
-  <aggregation interval> \
-  <y axis max> \
-  <y axis tics>
-e.g.
-bash scripts/relative_popularity_plot_tag.sh \
-  output/tag\=print-quality/part-00000-9b6e8399-3e48-4a97-a355-4b239b975515.c000.csv \
-  print-quality \
-  8weeks \
-  1.0 \
-  0.1
+#bash scripts/plot/generic/plot_relative_popularity_tag.sh \
+#  <csv result file> \
+#  <tag name> \
+#  <aggregation interval> \
+#  <y axis max> \
+#  <optional >
+#e.g.
+#bash scripts/relative_popularity_plot_tag.sh \
+#  output/tag\=print-quality/part-00000-9b6e8399-3e48-4a97-a355-4b239b975515.c000.csv \
+#  print-quality \
+#  8weeks \
+#  1.0 \
+#  0.1
 
 # entries count
-bash scripts/entries_count_plot_tag.sh \
-  <result file> \
-  <tag name> \
-  <aggregation interval> \
-  <y axis max>
-e.g.
-bash scripts/entries_count_plot_tag.sh \
-  output/tag\=print-quality/part-00000-9b6e8399-3e48-4a97-a355-4b239b975515.c000.csv \
-  print-quality \
+bash scripts/plot/generic/plot_entries_count_tag.sh \
+  target/output/scifi.stackexchange.com/tag\=star-wars/part-00000-28150a61-065b-4e24-8435-3b71b4911bcf.c000.csv \
+  star-wars \
   8weeks \
   100000
 ```
-
-Change on master

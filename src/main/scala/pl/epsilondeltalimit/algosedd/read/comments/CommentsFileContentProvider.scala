@@ -4,7 +4,6 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.algosedd.read.XmlFileStorage
 import pl.epsilondeltalimit.algosedd.read.implicits._
 import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
 
@@ -25,8 +24,8 @@ object CommentsFileContentProvider extends Transformation with Logging {
         (spark, pathToCommentsFile) =>
           logger.warn(s"Loading data from file: $pathToCommentsFile.")
 
-          new XmlFileStorage(spark)
-            .readFromFile("row", Schema, pathToCommentsFile)
+          spark
+            .readFromXmlFile(Schema, pathToCommentsFile)
             .withColumnNamesNormalized
             .select(
               col("id"),

@@ -2,6 +2,7 @@ package pl.epsilondeltalimit.algosedd
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
+import pl.epsilondeltalimit.algosedd.write.{RelativePopularityByAggregationIntervalAndTagStorage, TagsStorage}
 import pl.epsilondeltalimit.dep.v6_1.Catalog
 
 import java.time.LocalDate
@@ -77,13 +78,13 @@ object AlgoSEDD extends Logging {
       analyze.EntriesCountByAggregationInterval,
       analyze.EntriesCount,
       analyze.RelativePopularityByAggregationIntervalAndTag,
-      analyze.RelativePopularityByAggregationIntervalAndTagStorage,
-      analyze.Tags
+      write.RelativePopularityByAggregationIntervalAndTagStorage,
+      write.TagsStorage
     )
 
     val output = transformations.foldLeft(catalog)((_c, _t) => _t(_c))
 
-    output.eval[Unit]("RelativePopularityByAggregationIntervalAndTagStorage")
+    output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
 
     logger.warn("Done. Exiting.")
   }

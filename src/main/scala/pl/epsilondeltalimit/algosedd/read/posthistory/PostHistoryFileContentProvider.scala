@@ -4,7 +4,6 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.algosedd.read.XmlFileStorage
 import pl.epsilondeltalimit.algosedd.read.implicits._
 import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
 
@@ -30,8 +29,8 @@ object PostHistoryFileContentProvider extends Transformation with Logging {
 
           logger.warn(s"Loading data from file: $pathToPostHistoryFile.")
 
-          new XmlFileStorage(spark)
-            .readFromFile("row", Schema, pathToPostHistoryFile)
+          spark
+            .readFromXmlFile(Schema, pathToPostHistoryFile)
             .withColumnNamesNormalized
             .select(
               $"id",

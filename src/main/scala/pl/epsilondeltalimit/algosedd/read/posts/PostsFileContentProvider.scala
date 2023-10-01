@@ -5,7 +5,6 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DataTypes.IntegerType
 import org.apache.spark.sql.types._
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.algosedd.read.XmlFileStorage
 import pl.epsilondeltalimit.algosedd.read.implicits._
 import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
 
@@ -41,8 +40,8 @@ object PostsFileContentProvider extends Transformation with Logging {
 
         logger.warn(s"Loading data from file: $pathToPostsFile.")
 
-        new XmlFileStorage(spark)
-          .readFromFile("row", Schema, pathToPostsFile)
+        spark
+          .readFromXmlFile(Schema, pathToPostsFile)
           .withColumnNamesNormalized
           .select(
             $"id",

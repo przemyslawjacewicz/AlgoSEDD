@@ -10,7 +10,6 @@ import java.time._
 object Days extends Transformation {
   override def apply(c: Catalog): Catalog =
     c.put {
-
       c.get[SparkSession]("spark")
         .flatMap { spark =>
           c.get[LocalDate]("startDate").flatMap { startDate =>

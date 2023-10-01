@@ -10,42 +10,40 @@ object EntriesCountByAggregationInterval extends Transformation with Logging {
     c.put {
       c.get[DataFrame]("entriesCountByAggregationIntervalAndTag").map("entriesCountByAggregationInterval") {
         entriesCountByAggregationIntervalAndTag =>
-          import entriesCountByAggregationIntervalAndTag.sparkSession.implicits._
-
           logger.warn("Aggregating entries by aggregation interval.")
           entriesCountByAggregationIntervalAndTag
             .groupBy("aggregation_interval")
             .agg(
-              sum($"q__entries_count_for_aggregation_interval_and_tag")
+              sum(col("q__entries_count_for_aggregation_interval_and_tag"))
                 .as("q__entries_count_for_aggregation_interval"),
-              sum($"q__entries_count_for_aggregation_interval_and_tag" +
-                $"a__entries_count_for_aggregation_interval_and_tag")
+              sum(col("q__entries_count_for_aggregation_interval_and_tag") +
+                col("a__entries_count_for_aggregation_interval_and_tag"))
                 .as("q_a__entries_count_for_aggregation_interval"),
               sum(
-                $"q__entries_count_for_aggregation_interval_and_tag" +
-                  $"a__entries_count_for_aggregation_interval_and_tag" +
-                  $"c__entries_count_for_aggregation_interval_and_tag")
+                col("q__entries_count_for_aggregation_interval_and_tag") +
+                  col("a__entries_count_for_aggregation_interval_and_tag") +
+                  col("c__entries_count_for_aggregation_interval_and_tag"))
                 .as("q_a_c__entries_count_for_aggregation_interval"),
               sum(
-                $"q__entries_count_for_aggregation_interval_and_tag" +
-                  $"a__entries_count_for_aggregation_interval_and_tag" +
-                  $"c__entries_count_for_aggregation_interval_and_tag" +
-                  $"v__entries_count_for_aggregation_interval_and_tag")
+                col("q__entries_count_for_aggregation_interval_and_tag") +
+                  col("a__entries_count_for_aggregation_interval_and_tag") +
+                  col("c__entries_count_for_aggregation_interval_and_tag") +
+                  col("v__entries_count_for_aggregation_interval_and_tag"))
                 .as("q_a_c_v__entries_count_for_aggregation_interval"),
               sum(
-                $"q__entries_count_for_aggregation_interval_and_tag" +
-                  $"a__entries_count_for_aggregation_interval_and_tag" +
-                  $"c__entries_count_for_aggregation_interval_and_tag" +
-                  $"v__entries_count_for_aggregation_interval_and_tag" +
-                  $"ph__entries_count_for_aggregation_interval_and_tag")
+                col("q__entries_count_for_aggregation_interval_and_tag") +
+                  col("a__entries_count_for_aggregation_interval_and_tag") +
+                  col("c__entries_count_for_aggregation_interval_and_tag") +
+                  col("v__entries_count_for_aggregation_interval_and_tag") +
+                  col("ph__entries_count_for_aggregation_interval_and_tag"))
                 .as("q_a_c_v_ph__entries_count_for_aggregation_interval"),
               sum(
-                $"q__entries_count_for_aggregation_interval_and_tag" +
-                  $"a__entries_count_for_aggregation_interval_and_tag" +
-                  $"c__entries_count_for_aggregation_interval_and_tag" +
-                  $"v__entries_count_for_aggregation_interval_and_tag" +
-                  $"ph__entries_count_for_aggregation_interval_and_tag" +
-                  $"pl__entries_count_for_aggregation_interval_and_tag")
+                col("q__entries_count_for_aggregation_interval_and_tag") +
+                  col("a__entries_count_for_aggregation_interval_and_tag") +
+                  col("c__entries_count_for_aggregation_interval_and_tag") +
+                  col("v__entries_count_for_aggregation_interval_and_tag") +
+                  col("ph__entries_count_for_aggregation_interval_and_tag") +
+                  col("pl__entries_count_for_aggregation_interval_and_tag"))
                 .as("q_a_c_v_ph_pl__entries_count_for_aggregation_interval")
             )
       }
