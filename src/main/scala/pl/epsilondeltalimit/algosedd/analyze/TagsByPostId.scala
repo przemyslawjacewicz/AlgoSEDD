@@ -5,7 +5,7 @@ import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
 
 object TagsByPostId extends Transformation {
 
-  //TODO: this uses cartesian product !
+  // TODO: this uses cartesian product !
   //    val tagsByPostId = posts.as("postsL")
   //      .join(posts.as("postsR"), when($"postsL.tags".isNotNull, $"postsL.id" === $"postsR.id").otherwise($"postsL.parent_id" === $"postsR.id"))
   //      .select(

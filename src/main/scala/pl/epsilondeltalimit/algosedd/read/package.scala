@@ -10,9 +10,8 @@ package object read {
 
     implicit class DataFrameImplicits(df: DataFrame) {
       def withColumnNamesNormalized: DataFrame = {
-        def dropPrefixAndChangeCase(name: String) = {
+        def dropPrefixAndChangeCase(name: String) =
           CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, name.drop(1))
-        }
 
         val columns = df.columns.map(name => col(name).as(dropPrefixAndChangeCase(name)))
         df.select(columns: _*)

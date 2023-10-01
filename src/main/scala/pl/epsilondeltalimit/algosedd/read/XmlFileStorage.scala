@@ -1,4 +1,4 @@
-package pl.epsilondeltalimit.algosedd.storage
+package pl.epsilondeltalimit.algosedd.read
 
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -12,13 +12,12 @@ class XmlFileStorage(spark: SparkSession) {
 //      .load(path)
 //  }
 
-  def readFromXmlFile(rowTag: String, schema: StructType, path: String): DataFrame = {
+  def readFromFile(rowTag: String, schema: StructType, path: String): DataFrame =
     spark.read
       .format("xml")
-      .option("rowTag", rowTag) //"row"
+      .option("rowTag", rowTag) // "row"
       .option("inferSchema", value = false)
       .schema(schema)
       .load(path)
-  }
 
 }

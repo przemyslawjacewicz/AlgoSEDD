@@ -4,26 +4,27 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.to_date
 import org.apache.spark.sql.types._
 import pl.epsilondeltalimit.algosedd.Logging
+import pl.epsilondeltalimit.algosedd.read.XmlFileStorage
 import pl.epsilondeltalimit.algosedd.read.implicits._
-import pl.epsilondeltalimit.algosedd.storage.XmlFileStorage
 import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
 
 object UsersFileContentProvider extends Transformation with Logging {
 
-  private[this] val Schema: StructType = StructType(Array(
-    StructField("_Id", LongType),
-    StructField("_Reputation", IntegerType),
-    StructField("_CreationDate", StringType),
-    StructField("_DisplayName", StringType),
-    StructField("_LastAccessDate", StringType),
-    StructField("_WebsiteUrl", StringType),
-    StructField("_Location", StringType),
-    StructField("_AboutMe", StringType),
-    StructField("_Views", LongType),
-    StructField("_UpVotes", LongType),
-    StructField("_DownVotes", LongType),
-    StructField("_AccountId", LongType)
-  ))
+  private[this] val Schema: StructType = StructType(
+    Array(
+      StructField("_Id", LongType),
+      StructField("_Reputation", IntegerType),
+      StructField("_CreationDate", StringType),
+      StructField("_DisplayName", StringType),
+      StructField("_LastAccessDate", StringType),
+      StructField("_WebsiteUrl", StringType),
+      StructField("_Location", StringType),
+      StructField("_AboutMe", StringType),
+      StructField("_Views", LongType),
+      StructField("_UpVotes", LongType),
+      StructField("_DownVotes", LongType),
+      StructField("_AccountId", LongType)
+    ))
 
   override def apply(c: Catalog): Catalog =
     c.put {
@@ -32,9 +33,11 @@ object UsersFileContentProvider extends Transformation with Logging {
 
         logger.warn(s"Loading data from file: $pathToUsersFile.")
 
-        new XmlFileStorage(spark).readFromXmlFile("row", Schema, pathToUsersFile)
+        new XmlFileStorage(spark)
+          .readFromFile("row", Schema, pathToUsersFile)
           .withColumnNamesNormalized
-          .select($"id",
+          .select(
+            $"id",
             $"reputation",
             to_date($"creation_date".cast(TimestampType)).as("creation_date"),
             $"display_name",
@@ -45,7 +48,8 @@ object UsersFileContentProvider extends Transformation with Logging {
             $"views",
             $"up_votes",
             $"down_votes",
-            $"account_id")
+            $"account_id"
+          )
       }
     }
 
