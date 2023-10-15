@@ -21,7 +21,7 @@ object DataEntriesCountByCreationDateAndTag extends Transformation with Logging 
                       c.get[DataFrame]("tagsByCreationDataFromPostHistory")
                         .flatMap(tagsByCreationDataFromPostHistory =>
                           c.get[DataFrame]("tagsByCreationDataFromPostLinks")
-                            .map(tagsByCreationDataFromPostLinks =>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               .map(tagsByCreationDataFromPostLinks =>
                               countEntriesByCreationDateAndTag(tagsByCreationDataFromQuestions)
                                 .withColumnRenamed("count", "q__entries_count_for_day_and_tag")
                                 .join(countEntriesByCreationDateAndTag(tagsByCreationDataFromAnswers),
