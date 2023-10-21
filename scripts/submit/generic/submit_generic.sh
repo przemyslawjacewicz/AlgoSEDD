@@ -1,4 +1,5 @@
 #!/bin/bash
+#todo: consider removing
 # $1 - application to run
 # $2 - master
 # $3+ - application arguments

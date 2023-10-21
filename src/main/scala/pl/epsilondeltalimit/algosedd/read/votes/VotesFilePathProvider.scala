@@ -1,13 +1,16 @@
 package pl.epsilondeltalimit.algosedd.read.votes
 
-import pl.epsilondeltalimit.dep.v6_1.{Catalog, Transformation}
+import pl.epsilondeltalimit.dep.Catalog
+import pl.epsilondeltalimit.dep.Transformations.Transformation
 
 object VotesFilePathProvider extends Transformation {
   override def apply(c: Catalog): Catalog =
     c.put {
-      c.get[String]("rootPath").map("pathToVotesFile") { rootPath =>
-        s"$rootPath/Votes.xml"
-      }
+      c.get[String]("rootPath")
+        .map { rootPath =>
+          s"$rootPath/Votes.xml"
+        }
+        .as("pathToVotesFile")
     }
 
 }

@@ -4,7 +4,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 import pl.epsilondeltalimit.algosedd.Logging
 import pl.epsilondeltalimit.algosedd.read.implicits._
-import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
+import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
 object TagsFileContentProvider extends Transformation with Logging {
 

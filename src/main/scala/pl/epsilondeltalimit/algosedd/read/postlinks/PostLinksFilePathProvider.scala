@@ -1,13 +1,16 @@
 package pl.epsilondeltalimit.algosedd.read.postlinks
 
-import pl.epsilondeltalimit.dep.v6_1.{Catalog, Transformation}
+import pl.epsilondeltalimit.dep.Catalog
+import pl.epsilondeltalimit.dep.Transformations.Transformation
 
 object PostLinksFilePathProvider extends Transformation {
   override def apply(c: Catalog): Catalog =
     c.put {
-      c.get[String]("rootPath").map("pathToPostLinksFile") { rootPath =>
-        s"$rootPath/PostLinks.xml"
-      }
+      c.get[String]("rootPath")
+        .map { rootPath =>
+          s"$rootPath/PostLinks.xml"
+        }
+        .as("pathToPostLinksFile")
     }
 
 }

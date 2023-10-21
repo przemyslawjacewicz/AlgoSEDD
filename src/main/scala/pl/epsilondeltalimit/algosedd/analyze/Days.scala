@@ -2,7 +2,8 @@ package pl.epsilondeltalimit.algosedd.analyze
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{RowFactory, SparkSession}
-import pl.epsilondeltalimit.dep.v6_1.{Catalog, Transformation}
+import pl.epsilondeltalimit.dep.Catalog
+import pl.epsilondeltalimit.dep.Transformations.Transformation
 
 import java.sql.Date
 import java.time._
@@ -24,6 +25,6 @@ object Days extends Transformation {
             }
           }
         }
-        .map("days")(identity)
+        .as("days")
     }
 }

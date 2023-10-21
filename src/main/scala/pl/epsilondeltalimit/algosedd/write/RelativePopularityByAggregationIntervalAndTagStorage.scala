@@ -3,7 +3,8 @@ package pl.epsilondeltalimit.algosedd.write
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.dep.v6_1.{Catalog, Transformation}
+import pl.epsilondeltalimit.dep.Catalog
+import pl.epsilondeltalimit.dep.Transformations.Transformation
 
 object RelativePopularityByAggregationIntervalAndTagStorage extends Transformation with Logging {
   override def apply(c: Catalog): Catalog =
@@ -48,6 +49,6 @@ object RelativePopularityByAggregationIntervalAndTagStorage extends Transformati
                 .save(pathToOutput)
           }
         }
-        .map("relativePopularityByAggregationIntervalAndTagStorage")(identity)
+        .as("relativePopularityByAggregationIntervalAndTagStorage")
     }
 }

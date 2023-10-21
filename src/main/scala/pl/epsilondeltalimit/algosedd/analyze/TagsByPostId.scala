@@ -1,7 +1,8 @@
 package pl.epsilondeltalimit.algosedd.analyze
 
 import org.apache.spark.sql.DataFrame
-import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
+import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
 object TagsByPostId extends Transformation {
 

@@ -3,7 +3,8 @@ package pl.epsilondeltalimit.algosedd.analyze
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.dep.v6_1.{Catalog, Dep, Transformation}
+import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
 object TagsByCreationDataFromPostHistory extends Transformation with Logging {
   override def apply(c: Catalog): Catalog =

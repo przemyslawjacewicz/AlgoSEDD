@@ -1,15 +1,25 @@
-ThisBuild / version      := "0.1-SNAPSHOT"
-ThisBuild / scalaVersion := "2.12.15"
-ThisBuild / organization := "pl.epsilondeltalimit"
+import Common.Library.implicits
+import Common.*
+import sbt.project
 
-lazy val sparkVersion = "3.2.1"
+name    := "AlgoSEDD"
+version := "0.1"
+
+updateSbtClassifiers / useCoursier := true
 
 lazy val root = (project in file("."))
+  .settings(Common.settings(ProjectVersion(0, 1)))
+  .settings(Common.assemblyConf)
   .settings(
-    name                                          := "AlgoSEDD",
-    libraryDependencies += "org.apache.spark"     %% "spark-core" % sparkVersion % Provided,
-    libraryDependencies += "org.apache.spark"     %% "spark-sql"  % sparkVersion % Provided,
-    libraryDependencies += "com.databricks"       %% "spark-xml"  % "0.17.0",
-    libraryDependencies += "com.google.guava"      % "guava"      % "23.0",
-    libraryDependencies += "pl.epsilondeltalimit" %% "dep"        % "0.1"
+    libraryDependencies ++= Library.spark % Provided,
+    libraryDependencies ++= Library.scopt,
+    libraryDependencies ++= Library.logging,
+    libraryDependencies ++= Library.pureConfig,
+    libraryDependencies ++= Library.dep,
+    libraryDependencies ++= Library.sparkTests % Test,
+    libraryDependencies ++= Library.scalaTest  % Test,
+    libraryDependencies ++= Library.scalaMock  % Test
+  )
+  .settings(
+    Test / packageBin / publishArtifact := true
   )

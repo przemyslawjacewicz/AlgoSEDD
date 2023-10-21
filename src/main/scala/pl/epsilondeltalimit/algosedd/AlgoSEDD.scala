@@ -1,7 +1,8 @@
 package pl.epsilondeltalimit.algosedd
 
 import org.apache.spark.sql.functions.lit
-import pl.epsilondeltalimit.dep.v6_1.Catalog
+import pl.epsilondeltalimit.dep.Catalog
+import pl.epsilondeltalimit.dep.Transformations.Transformation
 
 import java.time.LocalDate
 
@@ -34,7 +35,7 @@ object AlgoSEDD extends Logging {
     val dateFilter = lit(true)
 
     // todo: convert to reflection-based transformation retrieval
-    val transformations = Set(
+    val transformations: Set[Transformation] = Set(
       SparkSessionProvider,
       read.badges.BadgesFilePathProvider,
       read.badges.BadgesFileContentProvider,
@@ -74,7 +75,8 @@ object AlgoSEDD extends Logging {
     )
 
 //    val output = transformations.foldLeft(catalog)((c, t) => t(c))
-    val output = transformations.foldRight(catalog)(_(_))
+    val output = catalog
+      .withTransformations(transformations.toSeq: _*)
 
     output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
 
