@@ -78,7 +78,8 @@ object AlgoSEDD extends Logging {
     val output = catalog
       .withTransformations(transformations.toSeq: _*)
 
-    output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
+    output.show("relativePopularityByAggregationIntervalAndTagStorage")
+//    output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
 
     logger.warn("Done. Exiting.")
   }

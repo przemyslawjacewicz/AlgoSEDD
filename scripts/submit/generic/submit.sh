@@ -11,6 +11,7 @@ OUTPUT_DIR="$7"
 
 spark-submit \
   --master "$MASTER" \
+  --packages "com.databricks:spark-xml_2.12:0.7.0" \
   --conf "spark.eventLog.enabled=true" \
   --conf "spark.eventLog.dir=file:/tmp/spark-events" \
   --class pl.epsilondeltalimit.algosedd.AlgoSEDD \

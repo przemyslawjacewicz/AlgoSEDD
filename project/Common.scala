@@ -80,7 +80,7 @@ object Common {
     )
 
     lazy val sparkXml = Seq(
-      "com.databricks"       %% "spark-xml"  % "0.17.0"
+      "com.databricks"       %% "spark-xml"  % "0.16.0"
     )
 
     lazy val sparkTests = Seq(
