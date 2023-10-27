@@ -1,32 +1,22 @@
 package pl.epsilondeltalimit.algosedd
 
 import org.apache.spark.sql.functions.lit
-import pl.epsilondeltalimit.dep.Catalog
+import pl.epsilondeltalimit.algosedd.read.badges.BadgesFilePathProvider.BadgesXmlFileName
+import pl.epsilondeltalimit.dep.{Catalog, Dep}
 import pl.epsilondeltalimit.dep.Transformations.Transformation
 
 import java.time.LocalDate
 
 //TODO: customize logging - add start and finish msg
 object AlgoSEDD extends Logging {
+  import Dep.implicits._
 
   def main(args: Array[String]): Unit = {
-
-    val catalog = new Catalog
-
     val startDate = args(0)
-    catalog.unit("startDate")(LocalDate.parse(startDate))
-
     val endDate = args(1)
-    catalog.unit("endDate")(LocalDate.parse(endDate))
-
     val aggregationInterval = args(2)
-    catalog.unit("aggregationInterval")(aggregationInterval)
-
     val rootPath = args(3)
-    catalog.unit("rootPath")(rootPath)
-
     val pathToOutput = args(4)
-    catalog.unit("pathToOutput")(pathToOutput)
 
     // todo: remove me
     // NOTE: date filter applicable only for testing
@@ -34,7 +24,6 @@ object AlgoSEDD extends Logging {
     //    val dateFilter = $"creation_date" > "2019-05-31" && $"creation_date" < "2019-07-01"
     val dateFilter = lit(true)
 
-    // todo: convert to reflection-based transformation retrieval
     val transformations: Set[Transformation] = Set(
       SparkSessionProvider,
       read.badges.BadgesFilePathProvider,
@@ -74,12 +63,17 @@ object AlgoSEDD extends Logging {
       write.TagsStorage
     )
 
-//    val output = transformations.foldLeft(catalog)((c, t) => t(c))
-    val output = catalog
+    val output = (new Catalog)
+      .unit("startDate")(LocalDate.parse(startDate))
+      .unit("endDate")(LocalDate.parse(endDate))
+      .unit("aggregationInterval")(aggregationInterval)
+      .unit("rootPath")(rootPath)
+      .unit("pathToOutput")(pathToOutput)
+      .put(   "rootPath".as[String].map(rootPath => s"$rootPath/$BadgesXmlFileName").as("pathToBadgesFile")  )
       .withTransformations(transformations.toSeq: _*)
 
     output.show("relativePopularityByAggregationIntervalAndTagStorage")
-//    output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
+    //    output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
 
     logger.warn("Done. Exiting.")
   }
