@@ -18,6 +18,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Library.pureConfig,
     libraryDependencies ++= Library.guava,
     libraryDependencies ++= Library.dep,
+    libraryDependencies ++= Library.cats,
     libraryDependencies ++= Library.sparkTests % Test,
     libraryDependencies ++= Library.scalaTest  % Test,
     libraryDependencies ++= Library.scalaMock  % Test

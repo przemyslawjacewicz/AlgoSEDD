@@ -80,7 +80,7 @@ object Common {
     )
 
     lazy val sparkXml = Seq(
-      "com.databricks"       %% "spark-xml"  % "0.16.0"
+      "com.databricks" %% "spark-xml" % "0.16.0"
     )
 
     lazy val sparkTests = Seq(
@@ -111,11 +111,15 @@ object Common {
     )
 
     lazy val guava = Seq(
-      "com.google.guava"      % "guava"      % "23.0"
+      "com.google.guava" % "guava" % "23.0"
     )
 
     lazy val dep = Seq(
-      "pl.epsilondeltalimit" %% "dep"        % "0.1"
+      "pl.epsilondeltalimit" %% "dep" % "0.1"
+    )
+
+    lazy val cats = Seq(
+      "org.typelevel" %% "cats-core" % "2.9.0"
     )
 
   }
