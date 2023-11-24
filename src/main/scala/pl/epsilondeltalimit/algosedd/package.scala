@@ -22,14 +22,6 @@ package object algosedd {
     implicit val id: String
   }
 
-  trait MultiPutTransformationM extends MultiPutTransformation {
-    implicit val id: String
-  }
-
-  trait MultiPutTransformationWithImplicitCatalogM extends MultiPutTransformationWithImplicitCatalog {
-    implicit val id: String
-  }
-
   implicit def depMonad(implicit id: String): Monad[Dep] =
     new Monad[Dep] {
       override def flatMap[A, B](fa: Dep[A])(f: A => Dep[B]): Dep[B] =
@@ -37,12 +29,12 @@ package object algosedd {
 
       override def tailRecM[A, B](a: A)(f: A => Dep[Either[A, B]]): Dep[B] =
         flatMap(f(a)) {
-          case Left(value) => tailRecM(value)(f)
+          case Left(value)  => tailRecM(value)(f)
           case Right(value) => pure(value)
         }
 
       override def pure[A](x: A): Dep[A] =
-        new Dep[A](id, () => Set.empty)(() => x)
+        Dep.dep(id)(x)
     }
 
 }
