@@ -1,16 +1,8 @@
 package pl.epsilondeltalimit.algosedd.read.posts
 
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.algosedd.read.FilePathProvider
 
-object PostsFilePathProvider extends Transformation {
-  override def apply(c: Catalog): Catalog =
-    c.put {
-      c.get[String]("rootPath")
-        .map { rootPath =>
-          s"$rootPath/Posts.xml"
-        }
-        .as("pathToPostsFile")
-    }
-
+object PostsFilePathProvider extends FilePathProvider {
+  override val fileName: String = "Posts.xml"
+  override val id: String       = "pathToPostsFile"
 }

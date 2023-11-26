@@ -1,15 +1,8 @@
 package pl.epsilondeltalimit.algosedd.read.comments
 
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.algosedd.read.FilePathProvider
 
-object CommentsFilePathProvider extends Transformation {
-  override def apply(c: Catalog): Catalog =
-    c.put {
-      c.get[String]("rootPath")
-        .map { rootPath =>
-          s"$rootPath/Comments.xml"
-        }
-        .as("pathToCommentsFile")
-    }
+object CommentsFilePathProvider extends FilePathProvider {
+  override val fileName: String = "Comments.xml"
+  override val id: String       = "pathToCommentsFile"
 }

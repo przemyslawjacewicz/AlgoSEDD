@@ -3,14 +3,14 @@ package pl.epsilondeltalimit.algosedd.analyze
 import org.apache.spark.sql.functions.{col, isnull, not}
 import org.apache.spark.sql.{Column, DataFrame}
 import pl.epsilondeltalimit.algosedd.Logging
+import pl.epsilondeltalimit.dep.Catalog
 import pl.epsilondeltalimit.dep.Transformations.Transformation
-import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
 object TagsByCreationDataFromAnswers extends Transformation with Logging {
   override def apply(c: Catalog): Catalog =
     c.put {
-      Dep.map2("tagsByCreationDataFromAnswers")(c.get[DataFrame]("posts"), c.get[DataFrame]("tagsByPostId")) {
-        (posts, tagsByPostId) =>
+      c.get[DataFrame]("posts")
+        .map2(c.get[DataFrame]("tagsByPostId")) { (posts, tagsByPostId) =>
           logger.warn("Creating tags by creation date from answers.")
           val postRecordIsAnswer: Column = col("post_type_id") === 2 && not(isnull(col("parent_id")))
 
@@ -19,6 +19,7 @@ object TagsByCreationDataFromAnswers extends Transformation with Logging {
             .where(postRecordIsAnswer)
             .join(tagsByPostId.as("tagsByPostId"), col("posts.id") === col("tagsByPostId.post_id"))
             .select(col("creation_date"), col("tagsByPostId.tags"))
-      }
+        }
+        .as("tagsByCreationDataFromAnswers")
     }
 }

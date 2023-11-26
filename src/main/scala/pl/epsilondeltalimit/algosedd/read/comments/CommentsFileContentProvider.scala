@@ -5,11 +5,13 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import pl.epsilondeltalimit.algosedd.Logging
 import pl.epsilondeltalimit.algosedd.read.implicits._
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
 import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
-object CommentsFileContentProvider extends Transformation with Logging {
-  private[this] val Schema: StructType = StructType(
+object CommentsFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
+  import Dep.implicits._
+
+  private val Schema: StructType = StructType(
     Array(
       StructField("_Id", LongType),
       StructField("_PostId", LongType),
@@ -19,26 +21,26 @@ object CommentsFileContentProvider extends Transformation with Logging {
       StructField("_UserId", LongType)
     ))
 
-  override def apply(c: Catalog): Catalog =
-    c.put {
-      Dep.map2("comments")(c.get[SparkSession]("spark"), c.get[String]("pathToCommentsFile")) {
-        (spark, pathToCommentsFile) =>
-          logger.warn(s"Loading data from file: $pathToCommentsFile.")
+  override def apply(implicit c: Catalog): Dep[_] =
+    "spark"
+      .as[SparkSession]
+      .map2("pathToCommentsFile".as[String]) { (spark, pathToCommentsFile) =>
+        logger.warn(s"Loading data from file: $pathToCommentsFile.")
 
-          spark
-            .readFromXmlFile(Schema, pathToCommentsFile)
-            .withColumnNamesNormalized
-            .select(
-              col("id"),
-              col("post_id"),
-              col("score"),
-              col("text"),
-              to_date(col("creation_date").cast(TimestampType)).as("creation_date"),
-              col("user_id")
-            )
-            .withColumn("year", year(col("creation_date")))
-            .withColumn("quarter", quarter(col("creation_date")))
+        spark
+          .readFromXmlFile(Schema, pathToCommentsFile)
+          .withColumnNamesNormalized
+          .select(
+            col("id"),
+            col("post_id"),
+            col("score"),
+            col("text"),
+            to_date(col("creation_date").cast(TimestampType)).as("creation_date"),
+            col("user_id")
+          )
+          .withColumn("year", year(col("creation_date")))
+          .withColumn("quarter", quarter(col("creation_date")))
       }
-    }
+      .as("comments")
 
 }

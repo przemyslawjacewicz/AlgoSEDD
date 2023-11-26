@@ -2,18 +2,20 @@ package pl.epsilondeltalimit.algosedd.analyze
 
 import org.apache.spark.sql.DataFrame
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
-import pl.epsilondeltalimit.dep.{Catalog, Dep}
+import pl.epsilondeltalimit.dep.Catalog
+import pl.epsilondeltalimit.dep.Transformations.Transformation
 
-object EntriesCount extends PutTransformationWithImplicitCatalog with Logging {
+object EntriesCount extends Transformation with Logging {
 
-  import Dep.implicits._
-
-  override def apply(implicit c: Catalog) =
-    "entriesCountByAggregationIntervalAndTag".as[DataFrame].map2("entriesCountByAggregationInterval".as[DataFrame]) { (entriesCountByAggregationIntervalAndTag, entriesCountByAggregationInterval) =>
-      logger.warn("ANALYZING: {posts:questions | posts:answers | comments | votes | post_history | post_links}.")
-      entriesCountByAggregationIntervalAndTag
-        .join(entriesCountByAggregationInterval, "aggregation_interval")
+  override def apply(c: Catalog): Catalog =
+    c.put {
+      c.get[DataFrame]("entriesCountByAggregationIntervalAndTag")
+        .map2(c.get[DataFrame]("entriesCountByAggregationInterval")) {
+          (entriesCountByAggregationIntervalAndTag, entriesCountByAggregationInterval) =>
+            logger.warn("ANALYZING: {posts:questions | posts:answers | comments | votes | post_history | post_links}.")
+            entriesCountByAggregationIntervalAndTag
+              .join(entriesCountByAggregationInterval, "aggregation_interval")
+        }
+        .as("entriesCount")
     }
-      .as("entriesCount")
 }

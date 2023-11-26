@@ -1,16 +1,8 @@
 package pl.epsilondeltalimit.algosedd.read.tags
 
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.algosedd.read.FilePathProvider
 
-object TagsFilePathProvider extends Transformation {
-  override def apply(c: Catalog): Catalog =
-    c.put {
-      c.get[String]("rootPath")
-        .map { rootPath =>
-          s"$rootPath/Tags.xml"
-        }
-        .as("pathToTagsFile")
-    }
-
+object TagsFilePathProvider extends FilePathProvider {
+  override val fileName: String = "Tags.xml"
+  override val id: String       = "pathToTagsFile"
 }

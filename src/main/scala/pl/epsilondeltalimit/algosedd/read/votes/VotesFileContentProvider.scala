@@ -5,12 +5,13 @@ import org.apache.spark.sql.functions.{quarter, to_date, year}
 import org.apache.spark.sql.types._
 import pl.epsilondeltalimit.algosedd.Logging
 import pl.epsilondeltalimit.algosedd.read.implicits._
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
 import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
-object VotesFileContentProvider extends Transformation with Logging {
+object VotesFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
+  import Dep.implicits._
 
-  private[this] val Schema: StructType = StructType(
+  private val Schema: StructType = StructType(
     Array(
       StructField("_Id", LongType),
       StructField("_PostId", LongType),
@@ -19,9 +20,10 @@ object VotesFileContentProvider extends Transformation with Logging {
       StructField("_CreationDate", StringType)
     ))
 
-  override def apply(c: Catalog): Catalog =
-    c.put {
-      Dep.map2("votes")(c.get[SparkSession]("spark"), c.get[String]("pathToVotesFile")) { (spark, pathToVotesFile) =>
+  override def apply(implicit c: Catalog): Dep[_] =
+    "spark"
+      .as[SparkSession]
+      .map2("pathToVotesFile".as[String]) { (spark, pathToVotesFile) =>
         import spark.implicits._
 
         logger.warn(s"Loading data from file: $pathToVotesFile.")
@@ -39,6 +41,5 @@ object VotesFileContentProvider extends Transformation with Logging {
           .withColumn("year", year($"creation_date"))
           .withColumn("quarter", quarter($"creation_date"))
       }
-    }
-
+      .as("votes")
 }

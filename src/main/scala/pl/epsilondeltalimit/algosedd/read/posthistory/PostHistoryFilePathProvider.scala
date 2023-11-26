@@ -1,16 +1,8 @@
 package pl.epsilondeltalimit.algosedd.read.posthistory
 
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.algosedd.read.FilePathProvider
 
-object PostHistoryFilePathProvider extends Transformation {
-  override def apply(c: Catalog): Catalog =
-    c.put {
-      c.get[String]("rootPath")
-        .map { rootPath =>
-          s"$rootPath/PostHistory.xml"
-        }
-        .as("pathToPostHistoryFile")
-    }
-
+object PostHistoryFilePathProvider extends FilePathProvider {
+  override val fileName: String = "PostHistory.xml"
+  override val id: String       = "pathToPostHistoryFile"
 }

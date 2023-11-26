@@ -1,16 +1,8 @@
 package pl.epsilondeltalimit.algosedd.read.users
 
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.algosedd.read.FilePathProvider
 
-object UsersFilePathProvider extends Transformation {
-  override def apply(c: Catalog): Catalog =
-    c.put {
-      c.get[String]("rootPath")
-        .map { rootPath =>
-          s"$rootPath/Users.xml"
-        }
-        .as("pathToUsersFile")
-    }
-
+object UsersFilePathProvider extends FilePathProvider {
+  override val fileName: String = "Users.xml"
+  override val id: String       = "pathToUsersFile"
 }

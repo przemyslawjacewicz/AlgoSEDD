@@ -1,31 +1,32 @@
 package pl.epsilondeltalimit.algosedd
 
-import org.apache.spark.sql.functions.lit
-import pl.epsilondeltalimit.algosedd.read.badges.BadgesFilePathProvider.BadgesXmlFileName
-import pl.epsilondeltalimit.dep.{Catalog, Dep}
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.Catalog
+import pl.epsilondeltalimit.dep.Transformations._
+import pl.epsilondeltalimit.dep.Transformations.implicits._
 
 import java.time.LocalDate
 
 //TODO: customize logging - add start and finish msg
 object AlgoSEDD extends Logging {
-  import Dep.implicits._
 
   def main(args: Array[String]): Unit = {
-    val startDate = args(0)
-    val endDate = args(1)
+    val startDate           = args(0)
+    val endDate             = args(1)
     val aggregationInterval = args(2)
-    val rootPath = args(3)
-    val pathToOutput = args(4)
+    val rootPath            = args(3)
+    val pathToOutput        = args(4)
 
     // todo: remove me
     // NOTE: date filter applicable only for testing
     //    val dateFilter = $"creation_date" > "2017-12-31" && $"creation_date" < "2019-01-01"
     //    val dateFilter = $"creation_date" > "2019-05-31" && $"creation_date" < "2019-07-01"
-    val dateFilter = lit(true)
+//    val dateFilter = lit(true)
 
-    val transformations: Set[Transformation] = Set(
-      SparkSessionProvider,
+    val spark: Seq[Transformation] = Seq(
+      SparkSessionProvider
+    )
+
+    val readers: Seq[PutTransformationWithImplicitCatalog] = Seq(
       read.badges.BadgesFilePathProvider,
       read.badges.BadgesFileContentProvider,
       read.comments.CommentsFilePathProvider,
@@ -41,7 +42,10 @@ object AlgoSEDD extends Logging {
       read.users.UsersFilePathProvider,
       read.users.UsersFileContentProvider,
       read.votes.VotesFilePathProvider,
-      read.votes.VotesFileContentProvider,
+      read.votes.VotesFileContentProvider
+    )
+
+    val analyzers: Seq[Transformation] = Seq(
       analyze.TagsByQuestionPostId,
       analyze.TagsByAnswerPostId,
       analyze.TagsByPostId,
@@ -58,22 +62,27 @@ object AlgoSEDD extends Logging {
       analyze.EntriesCountByAggregationIntervalAndTag,
       analyze.EntriesCountByAggregationInterval,
       analyze.EntriesCount,
-      analyze.RelativePopularityByAggregationIntervalAndTag,
+      analyze.RelativePopularityByAggregationIntervalAndTag
+    )
+
+    val writers: Seq[Transformation] = Seq(
       write.RelativePopularityByAggregationIntervalAndTagStorage,
       write.TagsStorage
     )
 
     val output = (new Catalog)
-      .unit("startDate")(LocalDate.parse(startDate))
-      .unit("endDate")(LocalDate.parse(endDate))
-      .unit("aggregationInterval")(aggregationInterval)
-      .unit("rootPath")(rootPath)
-      .unit("pathToOutput")(pathToOutput)
-      .put(   "rootPath".as[String].map(rootPath => s"$rootPath/$BadgesXmlFileName").as("pathToBadgesFile")  )
-      .withTransformations(transformations.toSeq: _*)
+      .put("startDate")(LocalDate.parse(startDate))
+      .put("endDate")(LocalDate.parse(endDate))
+      .put("aggregationInterval")(aggregationInterval)
+      .put("rootPath")(rootPath)
+      .put("pathToOutput")(pathToOutput)
+      .withTransformations(spark: _*)
+      .withTransformations(readers: _*)
+      .withTransformations(analyzers: _*)
+      .withTransformations(writers: _*)
 
     output.show("relativePopularityByAggregationIntervalAndTagStorage")
-    //    output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
+//    output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
 
     logger.warn("Done. Exiting.")
   }

@@ -14,5 +14,7 @@ spark-submit \
   --packages "com.databricks:spark-xml_2.12:0.7.0" \
   --conf "spark.eventLog.enabled=true" \
   --conf "spark.eventLog.dir=file:/tmp/spark-events" \
+  --conf "spark.driver.extraJavaOptions=-Dlog4j.configuration=jar:file:$JAR!/log4j.properties" \
+  --conf "spark.executor.extraJavaOptions=-Dlog4j.configuration=jar:file:$JAR!/log4j.properties" \
   --class pl.epsilondeltalimit.algosedd.AlgoSEDD \
   "$JAR" "$START_DATE" "$END_DATE" "$AGGREGATION_INTERVAL" "$DUMP_DIR" "$OUTPUT_DIR"

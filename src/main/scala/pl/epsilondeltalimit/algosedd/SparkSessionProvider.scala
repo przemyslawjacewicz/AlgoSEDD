@@ -7,7 +7,7 @@ import pl.epsilondeltalimit.dep.Transformations.Transformation
 
 object SparkSessionProvider extends Transformation {
   override def apply(c: Catalog): Catalog =
-    c.unit("spark") {
+    c.put("spark") {
       SparkSession
         .builder()
         .appName(AlgoSEDD.getClass.getSimpleName)
