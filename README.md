@@ -1,5 +1,11 @@
 # AlgoSEDD
 
+## Publish `Dep`
+```scala
+cd Dep
+sbt clean publishLocal
+```
+
 ## Build assembly
 ```shell script
 sbt assembly

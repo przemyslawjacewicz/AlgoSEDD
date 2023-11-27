@@ -1,8 +1,10 @@
 package pl.epsilondeltalimit
 
 import cats.Monad
-import pl.epsilondeltalimit.dep.Dep
+import pl.epsilondeltalimit.dep.{BranchDep, Dep, LeafDep}
 import pl.epsilondeltalimit.dep.Transformations._
+
+import scala.annotation.tailrec
 
 package object algosedd {
 
@@ -27,14 +29,21 @@ package object algosedd {
       override def flatMap[A, B](fa: Dep[A])(f: A => Dep[B]): Dep[B] =
         fa.flatMap(f)
 
+//      @tailrec
+//      override def tailRecM[A, B](a: A)(f: A => Dep[Either[A, B]]): Dep[B] =
+//        flatMap(f(a)) {
+//          case Left(value)  => tailRecM(value)(f)
+//          case Right(value) => pure(value)
+//        }
       override def tailRecM[A, B](a: A)(f: A => Dep[Either[A, B]]): Dep[B] =
-        flatMap(f(a)) {
-          case Left(value)  => tailRecM(value)(f)
-          case Right(value) => pure(value)
-        }
+  f(a) match {
+    case LeafDep(id, needs) => ???
+    case dep: BranchDep[_] => ???
+  }
 
       override def pure[A](x: A): Dep[A] =
         Dep.dep(id)(x)
+
     }
 
 }
