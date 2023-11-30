@@ -1,15 +1,16 @@
 package pl.epsilondeltalimit.algosedd.read.users
 
+import cats.Monad
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.to_date
 import org.apache.spark.sql.types._
-import pl.epsilondeltalimit.algosedd.Logging
 import pl.epsilondeltalimit.algosedd.read.implicits._
+import pl.epsilondeltalimit.algosedd.{Logging, _}
+import pl.epsilondeltalimit.dep.Dep.implicits._
 import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
 import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
 object UsersFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
-  import Dep.implicits._
 
   private val Schema: StructType = StructType(
     Array(
@@ -28,9 +29,8 @@ object UsersFileContentProvider extends PutTransformationWithImplicitCatalog wit
     ))
 
   override def apply(implicit c: Catalog): Dep[_] =
-    "spark"
-      .as[SparkSession]
-      .map2("pathToUsersFile".as[String]) { (spark, pathToUsersFile) =>
+    Monad[Dep]
+      .map2("spark".as[SparkSession], "pathToUsersFile".as[String]) { (spark, pathToUsersFile) =>
         import spark.implicits._
 
         logger.warn(s"Loading data from file: $pathToUsersFile.")

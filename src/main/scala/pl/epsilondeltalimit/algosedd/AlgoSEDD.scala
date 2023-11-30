@@ -1,5 +1,6 @@
 package pl.epsilondeltalimit.algosedd
 
+import org.apache.spark.sql.DataFrame
 import pl.epsilondeltalimit.dep.Catalog
 import pl.epsilondeltalimit.dep.Transformations._
 import pl.epsilondeltalimit.dep.Transformations.implicits._
@@ -81,8 +82,8 @@ object AlgoSEDD extends Logging {
       .withTransformations(analyzers: _*)
       .withTransformations(writers: _*)
 
-    output.show("relativePopularityByAggregationIntervalAndTagStorage")
-//    output.eval[Unit]("relativePopularityByAggregationIntervalAndTagStorage")
+    output.show("relativePopularityByAggregationIntervalAndTag")
+    output.eval[DataFrame]("relativePopularityByAggregationIntervalAndTag").show()
 
     logger.warn("Done. Exiting.")
   }

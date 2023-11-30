@@ -1,14 +1,15 @@
 package pl.epsilondeltalimit.algosedd.read.tags
 
+import cats.Monad
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
-import pl.epsilondeltalimit.algosedd.Logging
 import pl.epsilondeltalimit.algosedd.read.implicits._
+import pl.epsilondeltalimit.algosedd.{Logging, _}
+import pl.epsilondeltalimit.dep.Dep.implicits._
 import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
 import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
 object TagsFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
-  import Dep.implicits._
 
   private val Schema: StructType = StructType(
     Array(
@@ -20,9 +21,8 @@ object TagsFileContentProvider extends PutTransformationWithImplicitCatalog with
     ))
 
   override def apply(implicit c: Catalog): Dep[_] =
-    "spark"
-      .as[SparkSession]
-      .map2("pathToTagsFile".as[String]) { (spark, pathToTagsFile) =>
+    Monad[Dep]
+      .map2("spark".as[SparkSession], "pathToTagsFile".as[String]) { (spark, pathToTagsFile) =>
         import spark.implicits._
 
         logger.warn(s"Loading data from file: $pathToTagsFile.")
@@ -33,4 +33,5 @@ object TagsFileContentProvider extends PutTransformationWithImplicitCatalog with
           .select($"id", $"tag_name", $"count", $"excerpt_post_id", $"wiki_post_id")
       }
       .as("tags")
+
 }

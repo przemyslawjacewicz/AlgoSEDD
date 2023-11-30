@@ -1,15 +1,16 @@
 package pl.epsilondeltalimit.algosedd.read.comments
 
+import cats.Monad
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import pl.epsilondeltalimit.algosedd.Logging
+import pl.epsilondeltalimit.algosedd._
 import pl.epsilondeltalimit.algosedd.read.implicits._
+import pl.epsilondeltalimit.dep.Dep.implicits._
 import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
 import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
 object CommentsFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
-  import Dep.implicits._
 
   private val Schema: StructType = StructType(
     Array(
@@ -22,9 +23,8 @@ object CommentsFileContentProvider extends PutTransformationWithImplicitCatalog 
     ))
 
   override def apply(implicit c: Catalog): Dep[_] =
-    "spark"
-      .as[SparkSession]
-      .map2("pathToCommentsFile".as[String]) { (spark, pathToCommentsFile) =>
+    Monad[Dep]
+      .map2("spark".as[SparkSession], "pathToCommentsFile".as[String]) { (spark, pathToCommentsFile) =>
         logger.warn(s"Loading data from file: $pathToCommentsFile.")
 
         spark

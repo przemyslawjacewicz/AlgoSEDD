@@ -1,15 +1,16 @@
 package pl.epsilondeltalimit.algosedd.read.posthistory
 
+import cats.Monad
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import pl.epsilondeltalimit.algosedd.Logging
 import pl.epsilondeltalimit.algosedd.read.implicits._
+import pl.epsilondeltalimit.algosedd.{Logging, _}
+import pl.epsilondeltalimit.dep.Dep.implicits._
 import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
 import pl.epsilondeltalimit.dep.{Catalog, Dep}
 
 object PostHistoryFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
-  import Dep.implicits._
 
   private val Schema: StructType = StructType(
     Array(
@@ -24,9 +25,8 @@ object PostHistoryFileContentProvider extends PutTransformationWithImplicitCatal
     ))
 
   override def apply(implicit c: Catalog): Dep[_] =
-    "spark"
-      .as[SparkSession]
-      .map2("pathToPostHistoryFile".as[String]) { (spark, pathToPostHistoryFile) =>
+    Monad[Dep]
+      .map2("spark".as[SparkSession], "pathToPostHistoryFile".as[String]) { (spark, pathToPostHistoryFile) =>
         import spark.implicits._
 
         logger.warn(s"Loading data from file: $pathToPostHistoryFile.")
