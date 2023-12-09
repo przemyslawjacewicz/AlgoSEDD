@@ -8,6 +8,7 @@ import scala.util.Random
 
 package object algosedd {
 
+  //todo: add monad law tests for this monad
   implicit val depMonad: Monad[Dep] = new Monad[Dep] {
     override def flatMap[A, B](fa: Dep[A])(f: A => Dep[B]): Dep[B] =
       fa.flatMap(f)
