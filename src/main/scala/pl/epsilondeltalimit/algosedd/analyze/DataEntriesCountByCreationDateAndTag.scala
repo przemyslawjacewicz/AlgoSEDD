@@ -2,14 +2,13 @@ package pl.epsilondeltalimit.algosedd.analyze
 
 import org.apache.spark.sql.DataFrame
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.catalog.Catalog
 
-object DataEntriesCountByCreationDateAndTag extends Transformation with Logging {
+object DataEntriesCountByCreationDateAndTag extends (Catalog => Catalog) with Logging {
 
-  val creationDateAndTag: Seq[String] = Seq("creation_date", "tag")
+  private val creationDateAndTag: Seq[String] = Seq("creation_date", "tag")
 
-  override def apply(c: Catalog): Catalog =
+  override def apply(implicit c: Catalog): Catalog =
     c.put {
       {
         for {

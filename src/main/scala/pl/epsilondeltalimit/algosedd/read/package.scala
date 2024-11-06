@@ -1,6 +1,7 @@
 package pl.epsilondeltalimit.algosedd
 
 import com.google.common.base.CaseFormat
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -27,6 +28,11 @@ package object read {
         val columns = df.columns.map(name => col(name).as(dropPrefixAndChangeCase(name)))
         df.select(columns: _*)
       }
+    }
+
+    implicit class StringOps(val str: String) extends AnyVal {
+      def /(s: String): String =
+        new Path(str, s).toString
     }
   }
 

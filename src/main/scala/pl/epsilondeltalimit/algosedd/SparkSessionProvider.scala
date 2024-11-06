@@ -2,10 +2,9 @@ package pl.epsilondeltalimit.algosedd
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.catalog.Catalog
 
-object SparkSessionProvider extends Transformation {
+object SparkSessionProvider extends (Catalog => Catalog) {
   override def apply(c: Catalog): Catalog =
     c.put("spark") {
       SparkSession

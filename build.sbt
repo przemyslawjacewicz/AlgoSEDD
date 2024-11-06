@@ -1,5 +1,5 @@
-import Common.Library.implicits
 import Common.*
+import Common.Library.implicits
 import sbt.project
 
 name    := "AlgoSEDD"
@@ -15,13 +15,9 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Library.sparkXml % Provided,
     libraryDependencies ++= Library.scopt,
     libraryDependencies ++= Library.logging,
-    libraryDependencies ++= Library.pureConfig,
-    libraryDependencies ++= Library.guava,
     libraryDependencies ++= Library.dep,
     libraryDependencies ++= Library.cats,
-    libraryDependencies ++= Library.sparkTests % Test,
-    libraryDependencies ++= Library.scalaTest  % Test,
-    libraryDependencies ++= Library.scalaMock  % Test
+    libraryDependencies ++= Library.sparkTests % Test
   )
   .settings(
     Test / packageBin / publishArtifact := true
