@@ -1,16 +1,15 @@
 package pl.epsilondeltalimit.algosedd.read.postlinks
 
-import cats.Monad
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import pl.epsilondeltalimit.algosedd._
 import pl.epsilondeltalimit.algosedd.read.implicits._
-import pl.epsilondeltalimit.algosedd.{Logging, _}
-import pl.epsilondeltalimit.dep.Dep.implicits._
-import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
-import pl.epsilondeltalimit.dep.{Catalog, Dep}
+import pl.epsilondeltalimit.dep.catalog.Catalog
+import pl.epsilondeltalimit.dep.dep.Result
+import pl.epsilondeltalimit.dep.transformation.implicits._
 
-object PostLinksFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
+object PostLinksFileContentProvider extends (Catalog => Result[DataFrame]) with Logging {
 
   private val Schema: StructType = StructType(
     Array(
@@ -24,9 +23,12 @@ object PostLinksFileContentProvider extends PutTransformationWithImplicitCatalog
       StructField("_Comment", StringType)
     ))
 
-  override def apply(implicit c: Catalog): Dep[_] =
-    Monad[Dep]
-      .map2("spark".as[SparkSession], "pathToPostLinksFile".as[String]) { (spark, pathToPostLinksFile) =>
+  override def apply(c: Catalog): Result[DataFrame] = {
+    implicit val _c: Catalog = c
+
+    "spark"
+      .as[SparkSession]
+      .map2("pathToPostLinksFile".as[String]) { (spark, pathToPostLinksFile) =>
         import spark.implicits._
 
         logger.warn(s"Loading data from file: $pathToPostLinksFile.")
@@ -48,5 +50,6 @@ object PostLinksFileContentProvider extends PutTransformationWithImplicitCatalog
           .withColumn("quarter", quarter($"creation_date"))
       }
       .as("postLinks")
+  }
 
 }

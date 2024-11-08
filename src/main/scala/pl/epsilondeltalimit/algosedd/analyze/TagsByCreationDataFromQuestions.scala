@@ -3,10 +3,9 @@ package pl.epsilondeltalimit.algosedd.analyze
 import org.apache.spark.sql.functions.{col, isnull, not}
 import org.apache.spark.sql.{Column, DataFrame}
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.catalog.Catalog
 
-object TagsByCreationDataFromQuestions extends Transformation with Logging {
+object TagsByCreationDataFromQuestions extends (Catalog => Catalog) with Logging {
   override def apply(c: Catalog): Catalog =
     c.put {
       c.get[DataFrame]("posts")

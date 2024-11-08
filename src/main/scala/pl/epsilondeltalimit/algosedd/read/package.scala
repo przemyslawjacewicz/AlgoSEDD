@@ -30,10 +30,6 @@ package object read {
       }
     }
 
-    implicit class StringOps(val str: String) extends AnyVal {
-      def /(s: String): String =
-        new Path(str, s).toString
-    }
   }
 
 }

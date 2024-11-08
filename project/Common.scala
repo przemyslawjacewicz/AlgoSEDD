@@ -102,9 +102,5 @@ object Common {
       "pl.epsilondeltalimit" %% "dep" % "0.1"
     )
 
-    lazy val cats: Seq[ModuleID] = Seq(
-      "org.typelevel" %% "cats-core" % "2.12.0"
-    )
-
   }
 }

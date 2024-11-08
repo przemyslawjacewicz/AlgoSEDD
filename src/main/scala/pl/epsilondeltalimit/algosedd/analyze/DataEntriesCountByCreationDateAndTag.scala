@@ -8,7 +8,7 @@ object DataEntriesCountByCreationDateAndTag extends (Catalog => Catalog) with Lo
 
   private val creationDateAndTag: Seq[String] = Seq("creation_date", "tag")
 
-  override def apply(implicit c: Catalog): Catalog =
+  override def apply(c: Catalog): Catalog =
     c.put {
       {
         for {

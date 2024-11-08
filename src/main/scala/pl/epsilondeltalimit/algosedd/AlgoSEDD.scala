@@ -1,9 +1,10 @@
 package pl.epsilondeltalimit.algosedd
 
 import org.apache.spark.sql.DataFrame
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations._
-import pl.epsilondeltalimit.dep.Transformations.implicits._
+import pl.epsilondeltalimit.dep.catalog.Catalog
+import pl.epsilondeltalimit.dep.catalog.untyped.UntypedCatalog
+import pl.epsilondeltalimit.dep.dep.Result
+import pl.epsilondeltalimit.dep.transformation.implicits._
 
 import java.time.LocalDate
 
@@ -23,11 +24,11 @@ object AlgoSEDD extends Logging {
     //    val dateFilter = $"creation_date" > "2019-05-31" && $"creation_date" < "2019-07-01"
 //    val dateFilter = lit(true)
 
-    val spark: Seq[Transformation] = Seq(
+    val spark: Seq[Catalog => Catalog] = Seq(
       SparkSessionProvider
     )
 
-    val readers: Seq[PutTransformationWithImplicitCatalog] = Seq(
+    val readers: Seq[Catalog => Result[_]] = Seq(
       read.badges.BadgesFilePathProvider,
       read.badges.BadgesFileContentProvider,
       read.comments.CommentsFilePathProvider,
@@ -46,7 +47,7 @@ object AlgoSEDD extends Logging {
       read.votes.VotesFileContentProvider
     )
 
-    val analyzers: Seq[Transformation] = Seq(
+    val analyzers: Seq[Catalog => Catalog] = Seq(
       analyze.TagsByQuestionPostId,
       analyze.TagsByAnswerPostId,
       analyze.TagsByPostId,
@@ -66,12 +67,12 @@ object AlgoSEDD extends Logging {
       analyze.RelativePopularityByAggregationIntervalAndTag
     )
 
-    val writers: Seq[Transformation] = Seq(
+    val writers: Seq[Catalog => Catalog] = Seq(
       write.RelativePopularityByAggregationIntervalAndTagStorage,
       write.TagsStorage
     )
 
-    val output = (new Catalog)
+    val output = (new UntypedCatalog)
       .put("startDate")(LocalDate.parse(startDate))
       .put("endDate")(LocalDate.parse(endDate))
       .put("aggregationInterval")(aggregationInterval)
@@ -82,7 +83,7 @@ object AlgoSEDD extends Logging {
       .withTransformations(analyzers: _*)
       .withTransformations(writers: _*)
 
-    output.show("relativePopularityByAggregationIntervalAndTag")
+    println(output.explain("relativePopularityByAggregationIntervalAndTag"))
     output.eval[DataFrame]("relativePopularityByAggregationIntervalAndTag").show()
 
     logger.warn("Done. Exiting.")

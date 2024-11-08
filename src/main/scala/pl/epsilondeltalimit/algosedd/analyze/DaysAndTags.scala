@@ -2,10 +2,9 @@ package pl.epsilondeltalimit.algosedd.analyze
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.catalog.Catalog
 
-object DaysAndTags extends Transformation {
+object DaysAndTags extends (Catalog => Catalog) {
   override def apply(c: Catalog): Catalog =
     c.put {
       c.get[DataFrame]("days")

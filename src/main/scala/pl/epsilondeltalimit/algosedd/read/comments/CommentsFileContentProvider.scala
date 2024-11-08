@@ -1,16 +1,15 @@
 package pl.epsilondeltalimit.algosedd.read.comments
 
-import cats.Monad
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import pl.epsilondeltalimit.algosedd._
 import pl.epsilondeltalimit.algosedd.read.implicits._
-import pl.epsilondeltalimit.dep.Dep.implicits._
-import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
-import pl.epsilondeltalimit.dep.{Catalog, Dep}
+import pl.epsilondeltalimit.dep.catalog.Catalog
+import pl.epsilondeltalimit.dep.dep.Result
+import pl.epsilondeltalimit.dep.transformation.implicits._
 
-object CommentsFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
+object CommentsFileContentProvider extends (Catalog => Result[DataFrame]) with Logging {
 
   private val Schema: StructType = StructType(
     Array(
@@ -22,9 +21,12 @@ object CommentsFileContentProvider extends PutTransformationWithImplicitCatalog 
       StructField("_UserId", LongType)
     ))
 
-  override def apply(implicit c: Catalog): Dep[_] =
-    Monad[Dep]
-      .map2("spark".as[SparkSession], "pathToCommentsFile".as[String]) { (spark, pathToCommentsFile) =>
+  override def apply(c: Catalog): Result[DataFrame] = {
+    implicit val _c: Catalog = c
+
+    "spark"
+      .as[SparkSession]
+      .map2("pathToCommentsFile".as[String]) { (spark, pathToCommentsFile) =>
         logger.warn(s"Loading data from file: $pathToCommentsFile.")
 
         spark
@@ -42,5 +44,6 @@ object CommentsFileContentProvider extends PutTransformationWithImplicitCatalog 
           .withColumn("quarter", quarter(col("creation_date")))
       }
       .as("comments")
+  }
 
 }

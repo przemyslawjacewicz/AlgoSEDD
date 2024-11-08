@@ -1,16 +1,15 @@
 package pl.epsilondeltalimit.algosedd.read.users
 
-import cats.Monad
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.to_date
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import pl.epsilondeltalimit.algosedd._
 import pl.epsilondeltalimit.algosedd.read.implicits._
-import pl.epsilondeltalimit.algosedd.{Logging, _}
-import pl.epsilondeltalimit.dep.Dep.implicits._
-import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
-import pl.epsilondeltalimit.dep.{Catalog, Dep}
+import pl.epsilondeltalimit.dep.catalog.Catalog
+import pl.epsilondeltalimit.dep.dep.Result
+import pl.epsilondeltalimit.dep.transformation.implicits._
 
-object UsersFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
+object UsersFileContentProvider extends (Catalog => Result[DataFrame]) with Logging {
 
   private val Schema: StructType = StructType(
     Array(
@@ -28,9 +27,12 @@ object UsersFileContentProvider extends PutTransformationWithImplicitCatalog wit
       StructField("_AccountId", LongType)
     ))
 
-  override def apply(implicit c: Catalog): Dep[_] =
-    Monad[Dep]
-      .map2("spark".as[SparkSession], "pathToUsersFile".as[String]) { (spark, pathToUsersFile) =>
+  override def apply(c: Catalog): Result[DataFrame] = {
+    implicit val _c: Catalog = c
+
+    "spark"
+      .as[SparkSession]
+      .map2("pathToUsersFile".as[String]) { (spark, pathToUsersFile) =>
         import spark.implicits._
 
         logger.warn(s"Loading data from file: $pathToUsersFile.")
@@ -54,5 +56,6 @@ object UsersFileContentProvider extends PutTransformationWithImplicitCatalog wit
           )
       }
       .as("users")
+  }
 
 }

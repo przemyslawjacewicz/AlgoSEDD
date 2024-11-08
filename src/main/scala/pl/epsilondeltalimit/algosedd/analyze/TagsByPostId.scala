@@ -1,10 +1,9 @@
 package pl.epsilondeltalimit.algosedd.analyze
 
 import org.apache.spark.sql.DataFrame
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.catalog.Catalog
 
-object TagsByPostId extends Transformation {
+object TagsByPostId extends (Catalog => Catalog) {
 
   // TODO: this uses cartesian product !
   //    val tagsByPostId = posts.as("postsL")

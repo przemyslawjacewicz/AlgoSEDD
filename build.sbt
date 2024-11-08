@@ -16,7 +16,6 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Library.scopt,
     libraryDependencies ++= Library.logging,
     libraryDependencies ++= Library.dep,
-    libraryDependencies ++= Library.cats,
     libraryDependencies ++= Library.sparkTests % Test
   )
   .settings(

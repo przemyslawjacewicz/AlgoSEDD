@@ -1,16 +1,14 @@
 package pl.epsilondeltalimit.algosedd.read.tags
 
-import cats.Monad
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.algosedd.implicits._
+import pl.epsilondeltalimit.algosedd._
 import pl.epsilondeltalimit.algosedd.read.implicits._
 import pl.epsilondeltalimit.dep.catalog.Catalog
-import pl.epsilondeltalimit.dep.dep.Dep
-import pl.epsilondeltalimit.dep.transformation.DepTransformationImplicit
+import pl.epsilondeltalimit.dep.dep.Result
+import pl.epsilondeltalimit.dep.transformation.implicits._
 
-object TagsFileContentProvider extends DepTransformationImplicit[DataFrame] with Logging {
+object TagsFileContentProvider extends (Catalog => Result[DataFrame]) with Logging {
 
   private val Schema: StructType = StructType(
     Array(
@@ -21,9 +19,12 @@ object TagsFileContentProvider extends DepTransformationImplicit[DataFrame] with
       StructField("_WikiPostId", LongType)
     ))
 
-  override def apply(implicit c: Catalog): Dep[DataFrame] =
-    Monad[Dep]
-      .map2("spark".as[SparkSession], "pathToTagsFile".as[String]) { (spark, pathToTagsFile) =>
+  override def apply(c: Catalog): Result[DataFrame] = {
+    implicit val _c: Catalog = c
+
+    "spark"
+      .as[SparkSession]
+      .map2("pathToTagsFile".as[String]) { (spark, pathToTagsFile) =>
         import spark.implicits._
 
         logger.warn(s"Loading data from file: $pathToTagsFile.")
@@ -34,5 +35,6 @@ object TagsFileContentProvider extends DepTransformationImplicit[DataFrame] with
           .select($"id", $"tag_name", $"count", $"excerpt_post_id", $"wiki_post_id")
       }
       .as("tags")
+  }
 
 }

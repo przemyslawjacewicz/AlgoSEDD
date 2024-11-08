@@ -3,10 +3,9 @@ package pl.epsilondeltalimit.algosedd.write
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import pl.epsilondeltalimit.algosedd.Logging
-import pl.epsilondeltalimit.dep.Catalog
-import pl.epsilondeltalimit.dep.Transformations.Transformation
+import pl.epsilondeltalimit.dep.catalog.Catalog
 
-object TagsStorage extends Transformation with Logging {
+object TagsStorage extends (Catalog => Catalog) with Logging {
   override def apply(c: Catalog): Catalog =
     c.put {
       c.get[DataFrame]("tags")

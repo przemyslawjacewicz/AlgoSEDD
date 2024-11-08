@@ -1,16 +1,15 @@
 package pl.epsilondeltalimit.algosedd.read.votes
 
-import cats.Monad
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{quarter, to_date, year}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import pl.epsilondeltalimit.algosedd._
 import pl.epsilondeltalimit.algosedd.read.implicits._
-import pl.epsilondeltalimit.algosedd.{Logging, _}
-import pl.epsilondeltalimit.dep.Dep.implicits._
-import pl.epsilondeltalimit.dep.Transformations.PutTransformationWithImplicitCatalog
-import pl.epsilondeltalimit.dep.{Catalog, Dep}
+import pl.epsilondeltalimit.dep.catalog.Catalog
+import pl.epsilondeltalimit.dep.dep.Result
+import pl.epsilondeltalimit.dep.transformation.implicits._
 
-object VotesFileContentProvider extends PutTransformationWithImplicitCatalog with Logging {
+object VotesFileContentProvider extends (Catalog => Result[DataFrame]) with Logging {
 
   private val Schema: StructType = StructType(
     Array(
@@ -21,9 +20,12 @@ object VotesFileContentProvider extends PutTransformationWithImplicitCatalog wit
       StructField("_CreationDate", StringType)
     ))
 
-  override def apply(implicit c: Catalog): Dep[_] =
-    Monad[Dep]
-      .map2("spark".as[SparkSession], "pathToVotesFile".as[String]) { (spark, pathToVotesFile) =>
+  override def apply(c: Catalog): Result[DataFrame] = {
+    implicit val _c: Catalog = c
+
+    "spark"
+      .as[SparkSession]
+      .map2("pathToVotesFile".as[String]) { (spark, pathToVotesFile) =>
         import spark.implicits._
 
         logger.warn(s"Loading data from file: $pathToVotesFile.")
@@ -42,5 +44,6 @@ object VotesFileContentProvider extends PutTransformationWithImplicitCatalog wit
           .withColumn("quarter", quarter($"creation_date"))
       }
       .as("votes")
+  }
 
 }
